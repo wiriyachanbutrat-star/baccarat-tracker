@@ -21,6 +21,7 @@ const els = {
   chipIcon: document.getElementById('chipIcon'),
   rounds: document.getElementById('rounds'),
   beadGrid: document.getElementById('beadGrid'),
+  bigRoadGrid: document.getElementById('bigRoadGrid'),
   streakLine: document.getElementById('streakLine'),
   barP: document.getElementById('barP'),
   barB: document.getElementById('barB'),
@@ -121,6 +122,30 @@ function buildBigRoadColumns(winners){
   return columns;
 }
 
+// Same grouping as buildBigRoadColumns, but keeps a tie counter per cell
+// (attached to whichever cell was most recently plotted) purely for the
+// Big Road grid's overlay marker — the road math never needs tie counts.
+function buildBigRoadCells(winners){
+  const columns = [];
+  let lastSide = null;
+  for (const w of winners){
+    if (w === 'T'){
+      if (columns.length){
+        const col = columns[columns.length - 1];
+        col[col.length - 1].ties++;
+      }
+      continue;
+    }
+    if (lastSide === null || w !== lastSide){
+      columns.push([{ side: w, ties: 0 }]);
+      lastSide = w;
+    } else {
+      columns[columns.length - 1].push({ side: w, ties: 0 });
+    }
+  }
+  return columns;
+}
+
 // Generic derived-road algorithm: Big Eye Boy (k=1), Small Road (k=2), and
 // Cockroach Road (k=3) are all the same rule at increasing look-back offsets.
 // For the Big Road entry at column c, row r (0-indexed):
@@ -143,6 +168,60 @@ function deriveRoad(columns, k){
     }
   }
   return points;
+}
+
+// The folk pattern names Thai baccarat players call out loud while
+// watching the Big Road. Checked in this order because their trigger
+// conditions don't overlap (they key off different current-column
+// lengths), but Dragon is checked first since a live streak is the
+// strongest, most obvious signal on the felt.
+function detectNamedPattern(columns){
+  if (columns.length === 0) return null;
+  const last = columns[columns.length - 1];
+  const lastLen = last.length;
+  const lastSide = last[0];
+  const sideName = s => (s === 'B' ? 'Banker' : 'Player');
+
+  if (lastLen >= 3){
+    return {
+      pick: lastSide,
+      label: 'มังกร (Dragon)',
+      reasonText: `${sideName(lastSide)} ออกติดต่อกัน ${lastLen} ตา (มังกร) — นักเล่นแพทเทิร์นมักแทงตามมังกรต่อจนกว่าจะหัก`,
+    };
+  }
+
+  if (columns.length >= 4 && columns.slice(-4).every(c => c.length === 1)){
+    const pick = lastSide === 'P' ? 'B' : 'P';
+    return {
+      pick,
+      label: 'ปิงปอง (Ping Pong)',
+      reasonText: `Banker/Player สลับกันไปมาต่อเนื่องอย่างน้อย 4 ตา (ปิงปอง) จึงมองว่าจะสลับต่อไปทางฝั่ง ${sideName(pick)}`,
+    };
+  }
+
+  if (columns.length >= 3){
+    const prev2 = columns[columns.length - 2];
+    const prev3 = columns[columns.length - 3];
+    if (prev2.length === 2 && prev3.length === 2){
+      if (lastLen === 1){
+        return {
+          pick: lastSide,
+          label: 'สองตัดหนึ่ง (Two-Cut-One)',
+          reasonText: `จังหวะก่อนหน้าออกซ้ำ 2 ตาแล้วสลับ 1 ตาต่อเนื่อง (สองตัดหนึ่ง) คาดว่าฝั่ง ${sideName(lastSide)} จะออกซ้ำอีกตาให้ครบคู่`,
+        };
+      }
+      if (lastLen === 2){
+        const pick = lastSide === 'P' ? 'B' : 'P';
+        return {
+          pick,
+          label: 'สองตัดหนึ่ง (Two-Cut-One)',
+          reasonText: `ฝั่ง ${sideName(lastSide)} ออกครบคู่ตามจังหวะสองตัดหนึ่งแล้ว คาดว่าจะตัดสลับไปฝั่ง ${sideName(pick)}`,
+        };
+      }
+    }
+  }
+
+  return null;
 }
 
 const DERIVED_ROADS = [
@@ -182,7 +261,14 @@ function getSuggestion(winners){
     return { pick: null, confidence: null, reasonText: 'มีแต่ผลเสมอในประวัติ ลองบันทึกผล Player หรือ Banker เพิ่มอีกสักตา' };
   }
 
-  const roads = computeDerivedRoads(winners);
+  const columns = buildBigRoadColumns(winners);
+
+  const named = detectNamedPattern(columns);
+  if (named){
+    return { pick: named.pick, confidence: named.label, reasonText: named.reasonText };
+  }
+
+  const roads = DERIVED_ROADS.map(road => ({ ...road, points: deriveRoad(columns, road.k) }));
   const votes = roads.map(r => r.points.length ? r.points[r.points.length - 1].color : null).filter(Boolean);
   const redVotes = votes.filter(v => v === 'red').length;
   const blueVotes = votes.filter(v => v === 'blue').length;
@@ -330,6 +416,62 @@ function renderBeadRoad(){
     els.beadGrid.appendChild(el);
   });
   els.beadGrid.parentElement.scrollLeft = els.beadGrid.scrollWidth;
+}
+
+// Renders a faithful Big Road grid: consecutive same-side wins stack
+// vertically in one column (max 6 rows); once a column hits 6 rows, a
+// continuing streak overflows sideways along the bottom row (the classic
+// "dragon tail") instead of growing a 7th row. Ties overlay a small count
+// badge on the cell they landed on rather than taking their own cell.
+function renderBigRoad(){
+  const winners = rounds.map(x => x.winner);
+  const columns = buildBigRoadCells(winners);
+  const grid = els.bigRoadGrid;
+  grid.innerHTML = '';
+
+  const ROWS = 6;
+  const cellMap = new Map();
+  let visualCol = 0;
+
+  columns.forEach(colCells => {
+    const startCol = visualCol;
+    colCells.forEach((cell, idx) => {
+      if (idx < ROWS){
+        cellMap.set(`${startCol},${idx}`, cell);
+      } else {
+        const overflowCol = startCol + (idx - ROWS + 1);
+        cellMap.set(`${overflowCol},${ROWS - 1}`, cell);
+      }
+    });
+    const consumed = colCells.length <= ROWS ? 1 : (colCells.length - ROWS + 1);
+    visualCol = startCol + consumed;
+  });
+
+  const totalCols = Math.max(visualCol, 1) + 1;
+  grid.style.gridTemplateColumns = `repeat(${totalCols}, 22px)`;
+
+  for (let r = 0; r < ROWS; r++){
+    for (let c = 0; c < totalCols; c++){
+      const cell = cellMap.get(`${c},${r}`);
+      const el = document.createElement('div');
+      if (!cell){
+        el.className = 'bigroad-empty';
+      } else {
+        el.className = 'bigroad-cell ' + (cell.side === 'P' ? 'player' : 'banker');
+        el.textContent = cell.side;
+        el.title = cell.side === 'P' ? 'Player' : 'Banker';
+        if (cell.ties > 0){
+          const tie = document.createElement('span');
+          tie.className = 'bigroad-tie';
+          tie.textContent = cell.ties > 1 ? String(cell.ties) : '';
+          tie.title = `เสมอ ${cell.ties} ครั้ง`;
+          el.appendChild(tie);
+        }
+      }
+      grid.appendChild(el);
+    }
+  }
+  grid.parentElement.scrollLeft = grid.parentElement.scrollWidth;
 }
 
 function renderRecommendation(sim, baseBet){
@@ -490,6 +632,7 @@ function updateUI(){
   }
 
   renderBeadRoad();
+  renderBigRoad();
   renderDerivedRoads();
 
   const baseBet = Math.max(1, Number(els.baseBet.value) || 20);
