@@ -69,10 +69,20 @@ h1{
 .lead{
   color:var(--muted);
   font-size:0.92rem;
-  margin:0;
+  margin:0 0 0.6rem;
   max-width:46ch;
   margin-inline:auto;
 }
+
+.nav-link{
+  display:inline-block;
+  font-size:0.78rem;
+  color:var(--gold-soft);
+  text-decoration:none;
+  border-bottom:1px solid transparent;
+}
+.nav-link:hover{border-bottom-color:var(--gold-soft);}
+.nav-link:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
 
 .layout{
   display:grid;
