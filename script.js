@@ -321,7 +321,7 @@ function updateUI(){
 
   renderBeadRoad();
 
-  const baseBet = Math.max(1, Number(els.baseBet.value) || 100);
+  const baseBet = Math.max(1, Number(els.baseBet.value) || 20);
   const sim = simulateMoney(baseBet);
   renderRecommendation(sim, baseBet);
   renderMoney(sim);
