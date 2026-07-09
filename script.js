@@ -137,17 +137,69 @@ function buildBigRoadCells(winners){
   return columns;
 }
 
-// The folk pattern names Thai baccarat players call out loud while
-// watching the Big Road. Checked in this order because their trigger
-// conditions don't overlap (they key off different current-column
-// lengths), but Dragon is checked first since a live streak is the
-// strongest, most obvious signal on the felt.
+const sideName = s => (s === 'B' ? 'Banker' : 'Player');
+
+// Generalizes "สองตัดหนึ่ง" (Two-Cut-One) to any repeat-length L: if the two
+// most recently COMPLETED columns both ran exactly L wins before switching,
+// that's a rhythm. While the current (rightmost) column is still shorter
+// than L, predict it keeps going to complete the unit; once it reaches L,
+// predict the rhythm cuts to the other side next.
+function detectCutRhythm(columns, L, label){
+  if (columns.length < 3) return null;
+  const last = columns[columns.length - 1];
+  const prev2 = columns[columns.length - 2];
+  const prev3 = columns[columns.length - 3];
+  if (prev2.length !== L || prev3.length !== L) return null;
+
+  const lastLen = last.length;
+  const lastSide = last[0];
+
+  if (lastLen < L){
+    return {
+      pick: lastSide,
+      label,
+      reasonText: `จังหวะก่อนหน้าออกซ้ำ ${L} ตาแล้วสลับต่อเนื่อง (${label}) คาดว่าฝั่ง ${sideName(lastSide)} จะออกซ้ำอีกตาให้ครบชุด`,
+    };
+  }
+  if (lastLen === L){
+    const pick = lastSide === 'P' ? 'B' : 'P';
+    return {
+      pick,
+      label,
+      reasonText: `ฝั่ง ${sideName(lastSide)} ออกครบ ${L} ตาตามจังหวะ${label}แล้ว คาดว่าจะตัดสลับไปฝั่ง ${sideName(pick)}`,
+    };
+  }
+  return null; // streak ran past L, the rhythm already broke
+}
+
+// Loose, single-occurrence "คู่" (Pair) read: the most recently completed
+// column is exactly 2 long, with no rhythm history behind it (that stronger
+// case is สองตัดหนึ่ง above). Gamblers commonly read an isolated pair as due
+// to get cut. Weakest of the named patterns — checked last, right before
+// giving up and showing "รอวิเคราะห์".
+function detectPair(columns){
+  if (columns.length < 2) return null;
+  const last = columns[columns.length - 1];
+  if (last.length !== 2) return null;
+  const pick = last[0] === 'P' ? 'B' : 'P';
+  return {
+    pick,
+    label: 'คู่ (Pair)',
+    reasonText: `ฝั่ง ${sideName(last[0])} เพิ่งออกครบคู่ (2 ตาติด) — จังหวะคู่มักถูกมองว่าใกล้ถึงตาตัดสลับไปฝั่ง ${sideName(pick)}`,
+  };
+}
+
+// The folk pattern names Thai baccarat players call out loud while watching
+// the Big Road, checked strongest/most specific first: a live streak
+// (Dragon) is the most obvious read; then strict alternation (Ping Pong);
+// then repeat-length rhythms confirmed over two full cycles (Three-Cut-One,
+// Two-Cut-One); then a bare, unconfirmed pair (Pair) as the last resort
+// before admitting there's nothing clear to call.
 function detectNamedPattern(columns){
   if (columns.length === 0) return null;
   const last = columns[columns.length - 1];
   const lastLen = last.length;
   const lastSide = last[0];
-  const sideName = s => (s === 'B' ? 'Banker' : 'Player');
 
   if (lastLen >= 3){
     return {
@@ -166,35 +218,22 @@ function detectNamedPattern(columns){
     };
   }
 
-  if (columns.length >= 3){
-    const prev2 = columns[columns.length - 2];
-    const prev3 = columns[columns.length - 3];
-    if (prev2.length === 2 && prev3.length === 2){
-      if (lastLen === 1){
-        return {
-          pick: lastSide,
-          label: 'สองตัดหนึ่ง (Two-Cut-One)',
-          reasonText: `จังหวะก่อนหน้าออกซ้ำ 2 ตาแล้วสลับ 1 ตาต่อเนื่อง (สองตัดหนึ่ง) คาดว่าฝั่ง ${sideName(lastSide)} จะออกซ้ำอีกตาให้ครบคู่`,
-        };
-      }
-      if (lastLen === 2){
-        const pick = lastSide === 'P' ? 'B' : 'P';
-        return {
-          pick,
-          label: 'สองตัดหนึ่ง (Two-Cut-One)',
-          reasonText: `ฝั่ง ${sideName(lastSide)} ออกครบคู่ตามจังหวะสองตัดหนึ่งแล้ว คาดว่าจะตัดสลับไปฝั่ง ${sideName(pick)}`,
-        };
-      }
-    }
-  }
+  const threeCut = detectCutRhythm(columns, 3, 'สามตัดหนึ่ง (Three-Cut-One)');
+  if (threeCut) return threeCut;
+
+  const twoCut = detectCutRhythm(columns, 2, 'สองตัดหนึ่ง (Two-Cut-One)');
+  if (twoCut) return twoCut;
+
+  const pair = detectPair(columns);
+  if (pair) return pair;
 
   return null;
 }
 
-// Only reads Dragon / Ping-Pong / Two-Cut-One off the Big Road. If none of
-// the three match, there's no clear call — return no pick rather than
-// reaching for a weaker signal, so the UI can honestly show "รอวิเคราะห์"
-// instead of forcing an answer.
+// Only reads named Big Road patterns (Dragon, Ping-Pong, Three-Cut-One,
+// Two-Cut-One, Pair). If none match, there's no clear call — return no pick
+// rather than reaching for a weaker signal, so the UI can honestly show
+// "รอวิเคราะห์" instead of forcing an answer.
 // Important: baccarat hands are independent draws — none of this actually
 // shifts the probability of the next hand. Real long-run accuracy sits at
 // the game's base rate (~45-50%), same as a coin flip weighted by house odds.
@@ -213,7 +252,7 @@ function getSuggestion(winners){
     return { pick: named.pick, confidence: named.label, reasonText: named.reasonText };
   }
 
-  return { pick: null, confidence: null, reasonText: 'รอวิเคราะห์ — ยังไม่เข้ารูปแบบมังกร, ปิงปอง หรือสองตัดหนึ่งที่ชัดเจน' };
+  return { pick: null, confidence: null, reasonText: 'รอวิเคราะห์ — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สามตัดหนึ่ง, สองตัดหนึ่ง หรือคู่ที่ชัดเจน' };
 }
 
 // Replays the history: the first WARMUP_ROUNDS results are observation only
