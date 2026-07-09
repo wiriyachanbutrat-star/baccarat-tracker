@@ -22,7 +22,7 @@ function clearAll(){
   inputs.forEach(inp => { inp.value = ''; inp.classList.remove('invalid'); });
   els.errorLine.textContent = '';
   els.trendNumber.textContent = '— — — —';
-  els.trendReason.textContent = 'กรอกผลย้อนหลังให้ครบ 5 งวดแล้วกดคำนวณ';
+  els.trendReason.textContent = 'กรอกผลย้อนหลังให้ครบ 10 งวดแล้วกดคำนวณ';
   els.trendDetail.innerHTML = '';
   els.modeNumber.textContent = '—';
   els.avgNumber.textContent = '—';
@@ -48,7 +48,7 @@ function readDraws(){
 function calculate(){
   const draws = readDraws();
   if (!draws){
-    els.errorLine.textContent = 'กรอกเลข 4 หลักให้ครบทั้ง 5 งวดก่อนครับ (เช่น 3452)';
+    els.errorLine.textContent = 'กรอกเลข 4 หลักให้ครบทั้ง 10 งวดก่อนครับ (เช่น 3452)';
     return;
   }
   els.errorLine.textContent = '';

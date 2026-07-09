@@ -11,15 +11,15 @@
     <header>
       <p class="eyebrow">Lao Lottery Helper</p>
       <h1>คำนวณหวยลาว 4 ตัวตรง</h1>
-      <p class="lead">กรอกผลย้อนหลัง 5 งวดล่าสุด ระบบจะเทียบค่าเก่าทีละงวดหาแนวโน้มผลต่างของแต่ละหลัก แล้วคาดการณ์ค่าถัดไปให้ (ไม่ใช่การทำนายผลจริง — ดูหมายเหตุท้ายหน้า)</p>
+      <p class="lead">กรอกผลย้อนหลัง 10 งวดล่าสุด ระบบจะเทียบค่าเก่าทีละงวดหาแนวโน้มผลต่างของแต่ละหลัก แล้วคาดการณ์ค่าถัดไปให้ (ไม่ใช่การทำนายผลจริง — ดูหมายเหตุท้ายหน้า)</p>
       <a class="nav-link" href="index.html">← ไปหน้าเว็บบาคาร่า</a>
     </header>
 
     <div class="layout">
       <div class="col">
         <section class="card">
-          <h2 class="section-title">ผลย้อนหลัง 5 งวดล่าสุด</h2>
-          <p class="hint">กรอกจากงวดเก่าสุด (แถวที่ 1) ไปงวดล่าสุด (แถวที่ 5) เลข 4 หลัก เช่น 3452</p>
+          <h2 class="section-title">ผลย้อนหลัง 10 งวดล่าสุด</h2>
+          <p class="hint">กรอกจากงวดเก่าสุด (แถวที่ 1) ไปงวดล่าสุด (แถวที่ 10) เลข 4 หลัก เช่น 3452</p>
           <div class="draw-rows" id="drawRows">
             <div class="draw-row">
               <span class="draw-label">งวดที่ 1 (เก่าสุด)</span>
@@ -38,8 +38,28 @@
               <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="3" placeholder="0000">
             </div>
             <div class="draw-row">
-              <span class="draw-label">งวดที่ 5 (ล่าสุด)</span>
+              <span class="draw-label">งวดที่ 5</span>
               <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="4" placeholder="0000">
+            </div>
+            <div class="draw-row">
+              <span class="draw-label">งวดที่ 6</span>
+              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="5" placeholder="0000">
+            </div>
+            <div class="draw-row">
+              <span class="draw-label">งวดที่ 7</span>
+              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="6" placeholder="0000">
+            </div>
+            <div class="draw-row">
+              <span class="draw-label">งวดที่ 8</span>
+              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="7" placeholder="0000">
+            </div>
+            <div class="draw-row">
+              <span class="draw-label">งวดที่ 9</span>
+              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="8" placeholder="0000">
+            </div>
+            <div class="draw-row">
+              <span class="draw-label">งวดที่ 10 (ล่าสุด)</span>
+              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="9" placeholder="0000">
             </div>
           </div>
           <div class="utility-row">
@@ -54,7 +74,7 @@
         <div class="result-card" id="resultCard">
           <p class="label">เลขคาดการณ์จากแนวโน้มผลต่าง</p>
           <p class="headline" id="trendNumber">— — — —</p>
-          <p class="reason" id="trendReason">กรอกผลย้อนหลังให้ครบ 5 งวดแล้วกดคำนวณ</p>
+          <p class="reason" id="trendReason">กรอกผลย้อนหลังให้ครบ 10 งวดแล้วกดคำนวณ</p>
         </div>
 
         <section class="card">
@@ -90,7 +110,7 @@
       </div>
     </div>
 
-    <p class="note">หวยลาวแต่ละงวดออกผลแบบสุ่มอิสระ ตัวเลขในงวดก่อนหน้าไม่ได้เพิ่มหรือลดโอกาสของงวดถัดไปจริง ๆ (แต่ละหลักมีโอกาสออก 1 ใน 10 เท่ากันเสมอ ไม่ว่าจะออกอะไรมาก่อน) เลขที่คำนวณได้บนหน้านี้เป็นเพียงสถิติของ 5 งวดที่กรอกไว้ ใช้เพื่อความเพลิดเพลินและติดตามข้อมูลเท่านั้น ไม่ใช่การรับประกันผลงวดถัดไปและไม่มีวิธีคำนวณใดทำนายหวยได้แม่นยำกว่าการสุ่มเดา</p>
+    <p class="note">หวยลาวแต่ละงวดออกผลแบบสุ่มอิสระ ตัวเลขในงวดก่อนหน้าไม่ได้เพิ่มหรือลดโอกาสของงวดถัดไปจริง ๆ (แต่ละหลักมีโอกาสออก 1 ใน 10 เท่ากันเสมอ ไม่ว่าจะออกอะไรมาก่อน) เลขที่คำนวณได้บนหน้านี้เป็นเพียงสถิติของ 10 งวดที่กรอกไว้ ใช้เพื่อความเพลิดเพลินและติดตามข้อมูลเท่านั้น การเพิ่มจำนวนงวดช่วยให้สถิติความถี่นิ่งขึ้น แต่ไม่ได้ทำให้ทายแม่นขึ้นจริง ไม่ใช่การรับประกันผลงวดถัดไปและไม่มีวิธีคำนวณใดทำนายหวยได้แม่นยำกว่าการสุ่มเดา</p>
   </div>
   <script src="lotto.js"></script>
 </body>
