@@ -89,18 +89,63 @@ function currentStreakFor(winners){
   return { side, len };
 }
 
-// Baccarat hands are independent draws from a freshly-tracked shoe: no
-// streak, chop, or ratio read from past results shifts the probability of
-// the next hand. The only lever that is actually "accurate" in expectation
-// is picking the side with the better long-run edge — Banker, even after
-// its 5% commission, edges out Player (-1.06% vs -1.24% per unit staked).
-// The recommendation is therefore constant and does not depend on history.
-function getSuggestion(){
-  return {
-    pick: 'B',
-    confidence: 'อิง Expected Value',
-    reasonText: `อิงความน่าจะเป็นมาตรฐานของบาคาร่า 8 副 ไม่ใช่การอ่านแนวโน้มจากประวัติ เพราะแต่ละตาเป็นอิสระทางสถิติ: Banker ชนะ ${(ODDS.B*100).toFixed(2)}% ต่อ Player ${(ODDS.P*100).toFixed(2)}% แม้หักค่าคอมมิชชัน 5% แล้ว Banker ยังขาดทุนคาดหวังต่อหน่วยน้อยกว่า (${(-ODDS.edgeB*100).toFixed(2)}% เทียบ ${(-ODDS.edgeP*100).toFixed(2)}%)`,
-  };
+function nonTieFor(winners){
+  return winners.filter(r => r !== 'T');
+}
+
+function isChop(nt){
+  if (nt.length < 4) return false;
+  const last4 = nt.slice(-4);
+  for (let i = 1; i < last4.length; i++){
+    if (last4[i] === last4[i-1]) return false;
+  }
+  return true;
+}
+
+// Reads the bead-road pattern (streak / chop / recent ratio) to pick a side.
+// Important: baccarat hands are independent draws — no pattern here actually
+// shifts the probability of the next hand. Real long-run accuracy of any of
+// these reads sits at the game's base rate (~45-50%), same as a coin flip
+// weighted by house odds. This exists to track what a "pattern player" would
+// have called, not because it beats the math — the fixed accuracy-badge in
+// the UI (see index.html) carries that disclaimer permanently.
+function getSuggestion(winners){
+  if (winners.length === 0){
+    return { pick: null, confidence: null, reasonText: 'ยังไม่มีข้อมูลให้วิเคราะห์' };
+  }
+  const nt = nonTieFor(winners);
+  if (nt.length === 0){
+    return { pick: null, confidence: null, reasonText: 'มีแต่ผลเสมอในประวัติ ลองบันทึกผล Player หรือ Banker เพิ่มอีกสักตา' };
+  }
+
+  const streak = currentStreakFor(winners);
+  let pick, reasonText, confidence;
+
+  if (streak.side && streak.len >= 2){
+    pick = streak.side;
+    confidence = streak.len >= 4 ? 'สตรีคยาว' : 'ตามสตรีค';
+    reasonText = `ฝั่งนี้ชนะติดต่อกัน ${streak.len} ตา รูปแบบเบดโรดมักถูกเล่นแบบ "ตามมังกร" จนกว่าจะเปลี่ยนเจ้า`;
+  } else if (isChop(nt)){
+    const last = nt[nt.length - 1];
+    pick = last === 'P' ? 'B' : 'P';
+    confidence = 'สลับฟันปลา';
+    reasonText = 'ผลล่าสุดสลับ Player/Banker ไปมาต่อเนื่อง (รูปแบบชนวน) จึงมองไปทางฝั่งตรงข้ามของตาก่อนหน้า';
+  } else {
+    const recent = nt.slice(-10);
+    const pCount = recent.filter(r => r === 'P').length;
+    const bCount = recent.filter(r => r === 'B').length;
+    if (pCount === bCount){
+      pick = nt[nt.length - 1];
+      confidence = 'สูสี';
+      reasonText = `10 ตาล่าสุดสูสีกัน (Player ${pCount} : Banker ${bCount}) จึงอิงตามผลล่าสุดไปก่อน`;
+    } else {
+      pick = pCount > bCount ? 'P' : 'B';
+      confidence = 'อิงสัดส่วน';
+      reasonText = `ใน 10 ตาล่าสุด ${pick === 'P' ? 'Player' : 'Banker'} ออกบ่อยกว่า (${Math.max(pCount,bCount)} จาก ${recent.length} ตา)`;
+    }
+  }
+
+  return { pick, confidence, reasonText };
 }
 
 // Replays the history: the first WARMUP_ROUNDS results are observation only
@@ -115,9 +160,12 @@ function simulateMoney(baseBet){
   let wins = 0, losses = 0, pushes = 0, maxStep = 1;
   let consecutiveLosses = 0, maxConsecutiveLosses = 0;
   const log = [];
-  const sugg = getSuggestion();
 
   for (let i = WARMUP_ROUNDS; i < rounds.length; i++){
+    const priorWinners = rounds.slice(0, i).map(x => x.winner);
+    const sugg = getSuggestion(priorWinners);
+    if (!sugg.pick) continue;
+
     const actual = rounds[i].winner;
     const betAmount = baseBet * MULTIPLIERS[step];
     maxStep = Math.max(maxStep, step + 1);
@@ -216,7 +264,18 @@ function renderRecommendation(sim, baseBet){
     return;
   }
 
-  const sugg = getSuggestion();
+  const sugg = getSuggestion(rounds.map(x => x.winner));
+
+  if (!sugg.pick){
+    chip.className = 'side-chip none';
+    chip.textContent = '?';
+    call.textContent = 'ยังไม่พอวิเคราะห์';
+    reason.textContent = sugg.reasonText;
+    els.nextBetAmount.textContent = '—';
+    els.stepTag.textContent = `ไม้ ${sim.step + 1}/${MULTIPLIERS.length}`;
+    return;
+  }
+
   chip.className = 'side-chip ' + (sugg.pick === 'P' ? 'player' : 'banker');
   chip.textContent = sugg.pick;
   call.textContent = `แทง ${sugg.pick === 'P' ? 'Player' : 'Banker'} — ${sugg.confidence}`;

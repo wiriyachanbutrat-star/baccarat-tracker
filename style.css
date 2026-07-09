@@ -166,6 +166,17 @@ h1{
   font-size:1rem;
 }
 
+.accuracy-badge{
+  margin:0.6rem 0 0;
+  padding:0.4rem 0.6rem;
+  border-radius:7px;
+  background:rgba(168,67,74,0.12);
+  border:1px solid rgba(168,67,74,0.4);
+  color:var(--bad);
+  font-size:0.72rem;
+  line-height:1.45;
+}
+
 .step-tag{
   display:inline-block;
   margin-left:0.4rem;
