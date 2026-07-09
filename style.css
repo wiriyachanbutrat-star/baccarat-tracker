@@ -369,69 +369,6 @@ h1{
 .history li{padding:0.15rem 0;}
 .history li::marker{color:var(--gold-soft);}
 
-.odds-grid{
-  display:flex;
-  flex-direction:column;
-  gap:0.5rem;
-  margin-bottom:0.7rem;
-}
-
-.odds-row{
-  display:grid;
-  grid-template-columns:1fr auto auto;
-  align-items:center;
-  gap:0.8rem;
-  padding:0.55rem 0.7rem;
-  border:1px solid var(--felt-line);
-  border-radius:8px;
-  background:rgba(0,0,0,0.16);
-}
-
-.odds-name{
-  font-weight:600;
-  font-size:0.9rem;
-}
-.odds-name.player{color:var(--player-soft);}
-.odds-name.banker{color:var(--banker-soft);}
-.odds-name.tie{color:var(--tie);}
-.odds-name em{
-  font-style:normal;
-  color:var(--muted);
-  font-size:0.74rem;
-  margin-left:0.3rem;
-}
-
-.odds-pct{
-  font-family:Georgia,serif;
-  font-size:1rem;
-  font-variant-numeric:tabular-nums;
-  color:var(--cream);
-}
-
-.odds-edge{
-  font-size:0.76rem;
-  padding:0.15rem 0.5rem;
-  border-radius:999px;
-  border:1px solid var(--felt-line);
-  color:var(--bad);
-  white-space:nowrap;
-}
-.odds-edge.best{
-  border-color:var(--gold);
-  color:var(--gold-soft);
-  font-weight:600;
-}
-.odds-edge.worst{
-  opacity:0.75;
-}
-
-.odds-note{
-  margin:0;
-  font-size:0.78rem;
-  color:var(--muted);
-  line-height:1.5;
-}
-
 .derived-roads{
   display:flex;
   flex-direction:column;
