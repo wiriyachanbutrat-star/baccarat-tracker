@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>คำนวณหวยลาว 4 ตัวตรง</title>
   <link rel="stylesheet" href="lotto.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
   <div class="table-frame">
@@ -63,6 +64,11 @@
             </div>
           </div>
           <div class="utility-row">
+            <button id="btn-import" class="utility-btn">นำเข้าจาก Excel</button>
+            <input type="file" id="fileImport" accept=".xlsx,.xls,.csv" hidden>
+          </div>
+          <p class="hint" style="margin:0.5rem 0 0;">ไฟล์ต้องมี 2 คอลัมน์: คอลัมน์แรก "งวด" (1-10), คอลัมน์ที่สอง "เลข" (4 หลัก) เรียงจากงวดเก่าสุดไปล่าสุด</p>
+          <div class="utility-row" style="margin-top:0.8rem;">
             <button id="btn-calc" class="entry-btn calc"><span class="dot"></span>คำนวณ</button>
             <button id="btn-clear" class="utility-btn">ล้างทั้งหมด</button>
           </div>

@@ -14,9 +14,54 @@ const els = {
 };
 
 const inputs = Array.from(document.querySelectorAll('.draw-input'));
+const fileImport = document.getElementById('fileImport');
 
 document.getElementById('btn-calc').addEventListener('click', calculate);
 document.getElementById('btn-clear').addEventListener('click', clearAll);
+document.getElementById('btn-import').addEventListener('click', () => fileImport.click());
+fileImport.addEventListener('change', importFromExcel);
+
+// Reads an uploaded .xlsx/.xls/.csv file (2 columns: งวด, เลข — oldest row
+// first) via SheetJS and fills the 10 draw inputs in row order. Numbers are
+// zero-padded to 4 digits since Excel drops leading zeros on numeric cells.
+function importFromExcel(e){
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try {
+      const workbook = XLSX.read(evt.target.result, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
+
+      // Column B, any row whose value is purely digits — this naturally
+      // skips a text header row (e.g. "เลข") without needing to detect it.
+      const values = rows
+        .map(r => r[1])
+        .filter(v => v !== undefined && v !== null && /^\d+$/.test(String(v).trim()))
+        .map(v => String(v).trim().padStart(4, '0').slice(-4));
+
+      if (values.length === 0){
+        els.errorLine.textContent = 'อ่านไฟล์ไม่พบตัวเลข ตรวจสอบว่าคอลัมน์ที่สองเป็นเลข 4 หลักครับ';
+        return;
+      }
+
+      const toFill = values.slice(0, inputs.length);
+      inputs.forEach((inp, i) => {
+        inp.value = toFill[i] || '';
+        inp.classList.remove('invalid');
+      });
+      els.errorLine.textContent = toFill.length < inputs.length
+        ? `นำเข้าได้ ${toFill.length}/${inputs.length} งวด กรอกที่เหลือเพิ่มเองก่อนกดคำนวณ`
+        : '';
+    } catch (err){
+      els.errorLine.textContent = 'อ่านไฟล์ไม่สำเร็จ ตรวจสอบว่าเป็นไฟล์ Excel/CSV ที่ถูกต้อง';
+    }
+    fileImport.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
 
 function clearAll(){
   inputs.forEach(inp => { inp.value = ''; inp.classList.remove('invalid'); });
