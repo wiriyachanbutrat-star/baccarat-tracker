@@ -74,6 +74,13 @@ h1{
   margin-inline:auto;
 }
 
+.nav-row{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:1rem;
+}
+
 .nav-link{
   display:inline-block;
   font-size:0.78rem;
