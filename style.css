@@ -196,6 +196,19 @@ h1{
   background:linear-gradient(90deg, var(--felt-line), transparent);
 }
 
+.card-title-row{
+  display:flex;
+  align-items:center;
+  gap:0.8rem;
+  margin-bottom:1rem;
+}
+
+.utility-btn.small{
+  flex-shrink:0;
+  padding:0.35rem 0.7rem;
+  font-size:0.72rem;
+}
+
 .controls{
   display:grid;
   grid-template-columns:repeat(3,1fr);

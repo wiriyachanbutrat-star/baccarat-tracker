@@ -74,7 +74,10 @@
         </section>
 
         <section class="card">
-          <h2 class="section-title">สถิติ</h2>
+          <div class="card-title-row">
+            <h2 class="section-title" style="margin:0;flex:1;">สถิติ</h2>
+            <button id="btn-reset-stats" class="utility-btn small">รีเซ็ตสถิติ</button>
+          </div>
           <div class="stat-grid">
             <div class="stat-tile player"><div class="n" id="player-count">0</div><div class="lbl">Player <span id="player-pct">0%</span></div></div>
             <div class="stat-tile banker"><div class="n" id="banker-count">0</div><div class="lbl">Banker <span id="banker-pct">0%</span></div></div>
@@ -94,7 +97,10 @@
     </div>
 
     <section class="card money-card">
-      <h2 class="section-title">ระบบทบเงิน (ทบ 3 ไม้)</h2>
+      <div class="card-title-row">
+        <h2 class="section-title" style="margin:0;flex:1;">ระบบทบเงิน (ทบ 3 ไม้)</h2>
+        <button id="btn-reset-money" class="utility-btn small">รีเซ็ตเงินเดิมพัน</button>
+      </div>
 
       <div class="money-top">
         <label class="bet-input-label">เงินเดิมพันตั้งต้น

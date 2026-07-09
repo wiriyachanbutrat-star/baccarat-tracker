@@ -52,6 +52,8 @@ document.getElementById('btn-banker').addEventListener('click', ()=>addResult('B
 document.getElementById('btn-tie').addEventListener('click', ()=>addResult('T'))
 document.getElementById('btn-undo').addEventListener('click', undo)
 document.getElementById('btn-clear').addEventListener('click', clearAll)
+document.getElementById('btn-reset-stats').addEventListener('click', clearAll)
+document.getElementById('btn-reset-money').addEventListener('click', resetMoney)
 els.baseBet.addEventListener('input', updateUI)
 
 function addResult(r){
@@ -61,6 +63,14 @@ function addResult(r){
 
 function undo(){
   rounds.pop();
+  updateUI();
+}
+
+// Scoped to the money-management card: resets the base bet back to its
+// default without touching the recorded rounds, stats, or history —
+// "รีเซ็ตทั้งหมด" (btn-clear) is the one that clears everything.
+function resetMoney(){
+  els.baseBet.value = 20;
   updateUI();
 }
 
