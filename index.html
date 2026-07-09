@@ -31,6 +31,22 @@
         </div>
 
         <section class="card">
+          <h2 class="section-title">ควรเข้าห้องแบบไหน</h2>
+          <ul class="room-checklist">
+            <li>ดูป้ายประวัติผล (Big Road) หน้าโต๊ะก่อนเข้า — เลือกห้องที่มีจังหวะต่อเนื่องชัดเจน เช่น มังกรยาวหรือปิงปองสม่ำเสมอ มากกว่าห้องที่ออกสุ่มไม่มีแบบแผน</li>
+            <li>หลีกเลี่ยงห้องที่เสมอถี่ผิดปกติ เพราะเสมอบ่อยจะรบกวนจังหวะที่กำลังอ่านอยู่</li>
+            <li>เข้าไปแล้วอย่าเพิ่งวางเงินจริง เก็บข้อมูลอย่างน้อย 6 ตาก่อน (ตามระบบวอร์มอัพ) เพื่อดูว่าห้องนั้นจังหวะเป็นแบบไหน</li>
+            <li>ถ้าเล่นไปแล้วรูปแบบเริ่มสุ่มไม่มีจังหวะ หรือแพ้ติดต่อกันตามที่การ์ดด้านบนเตือน ให้เปลี่ยนห้องทันที ไม่ต้องฝืน</li>
+          </ul>
+
+          <div class="room-fit pending" id="roomFit">
+            <p class="room-fit-title" id="roomFitTitle">บันทึกผลอีก 6 ตา เพื่อประเมินห้องนี้</p>
+            <ul class="room-fit-list" id="roomFitGood"></ul>
+            <ul class="room-fit-list" id="roomFitBad"></ul>
+          </div>
+        </section>
+
+        <section class="card">
           <h2 class="section-title">บันทึกผล</h2>
           <div class="controls">
             <button id="btn-player" class="entry-btn player"><span class="dot"></span>Player</button>

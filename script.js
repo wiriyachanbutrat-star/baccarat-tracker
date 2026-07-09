@@ -41,6 +41,10 @@ const els = {
   tableStatus: document.getElementById('tableStatus'),
   tableStatusTitle: document.getElementById('tableStatusTitle'),
   tableStatusReasons: document.getElementById('tableStatusReasons'),
+  roomFit: document.getElementById('roomFit'),
+  roomFitTitle: document.getElementById('roomFitTitle'),
+  roomFitGood: document.getElementById('roomFitGood'),
+  roomFitBad: document.getElementById('roomFitBad'),
 }
 
 document.getElementById('btn-player').addEventListener('click', ()=>addResult('P'))
@@ -330,6 +334,58 @@ function evaluateTableHealth(sim, baseBet){
   return { shouldStop: reasons.length > 0, reasons, decided, hitRatePct };
 }
 
+// A "which room to sit at" read, separate from table-status (which is about
+// whether to keep playing once you're already betting). Replays the whole
+// session the same way simulateMoney does — for each round after the first,
+// ask getSuggestion what the prior rounds implied — and scores how often a
+// named pattern actually showed up (readability), how often ties interrupt
+// play, and whether a pattern is live right now. A room that reads easily
+// and doesn't tie constantly is what pattern players look for on the
+// physical scoreboard before sitting down; this mirrors that read using the
+// session recorded so far.
+function evaluateRoomFit(){
+  const winners = rounds.map(x => x.winner);
+  const total = winners.length;
+
+  if (total < WARMUP_ROUNDS){
+    return { verdict: 'pending', remaining: WARMUP_ROUNDS - total };
+  }
+
+  let readable = 0;
+  for (let i = 1; i < winners.length; i++){
+    if (getSuggestion(winners.slice(0, i)).pick) readable++;
+  }
+  const readabilityPct = Math.round((readable / (winners.length - 1)) * 100);
+
+  const ties = winners.filter(w => w === 'T').length;
+  const tiePct = Math.round((ties / total) * 100);
+
+  const current = getSuggestion(winners);
+  const good = [];
+  const bad = [];
+
+  if (readabilityPct >= 40){
+    good.push(`รูปแบบขึ้นให้เห็นบ่อย (${readabilityPct}% ของตาที่ผ่านมาเข้ารูปแบบใดรูปแบบหนึ่ง)`);
+  } else {
+    bad.push(`รูปแบบยังไม่ค่อยชัดเจน (อ่านออกแค่ ${readabilityPct}% ของตาที่ผ่านมา)`);
+  }
+
+  if (tiePct > 12){
+    bad.push(`เสมอบ่อยกว่าปกติ (${tiePct}% ของตาทั้งหมด ปกติควรอยู่ราว 9-10%)`);
+  } else {
+    good.push(`อัตราเสมออยู่ในเกณฑ์ปกติ (${tiePct}%)`);
+  }
+
+  if (current.pick){
+    good.push(`ตอนนี้กำลังเข้าจังหวะ ${current.confidence}`);
+  } else {
+    bad.push('ตอนนี้ยังไม่เข้ารูปแบบไหนชัดเจน (รอวิเคราะห์)');
+  }
+
+  const verdict = good.length > bad.length ? 'good' : good.length === bad.length ? 'neutral' : 'bad';
+  return { verdict, good, bad, readabilityPct, tiePct };
+}
+
 function renderBeadRoad(){
   els.beadGrid.innerHTML = '';
   const winners = rounds.map(x=>x.winner);
@@ -472,6 +528,40 @@ function renderTableStatus(sim, baseBet){
   });
 }
 
+function renderRoomFit(){
+  const fit = evaluateRoomFit();
+  const box = els.roomFit;
+  els.roomFitGood.innerHTML = '';
+  els.roomFitBad.innerHTML = '';
+
+  if (fit.verdict === 'pending'){
+    box.className = 'room-fit pending';
+    els.roomFitTitle.textContent = `บันทึกผลอีก ${fit.remaining} ตา เพื่อประเมินห้องนี้`;
+    return;
+  }
+
+  const titles = {
+    good: 'ห้องนี้เข้าข่ายน่าเล่นต่อ',
+    neutral: 'ห้องนี้ยังกลาง ๆ — ตัดสินใจยากอยู่',
+    bad: 'ห้องนี้ยังไม่น่าเข้า ลองพิจารณาห้องอื่น',
+  };
+  box.className = 'room-fit ' + fit.verdict;
+  els.roomFitTitle.textContent = titles[fit.verdict];
+
+  fit.good.forEach(g => {
+    const li = document.createElement('li');
+    li.className = 'good';
+    li.textContent = g;
+    els.roomFitGood.appendChild(li);
+  });
+  fit.bad.forEach(b => {
+    const li = document.createElement('li');
+    li.className = 'bad';
+    li.textContent = b;
+    els.roomFitBad.appendChild(li);
+  });
+}
+
 function renderMoney(sim){
   els.stepsIndicator.querySelectorAll('.step-chip').forEach((el, idx) => {
     el.classList.toggle('active', idx === sim.step);
@@ -549,6 +639,7 @@ function updateUI(){
   renderRecommendation(sim, baseBet);
   renderMoney(sim);
   renderTableStatus(sim, baseBet);
+  renderRoomFit();
 
   els.btnUndo.disabled = rounds.length === 0;
 
