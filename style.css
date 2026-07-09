@@ -432,6 +432,70 @@ h1{
   line-height:1.5;
 }
 
+.derived-roads{
+  display:flex;
+  flex-direction:column;
+  gap:0.65rem;
+  margin-bottom:0.7rem;
+}
+
+.derived-row{
+  display:grid;
+  grid-template-columns:7.5rem 1fr auto;
+  align-items:center;
+  gap:0.7rem;
+  padding:0.5rem 0.6rem;
+  border:1px solid var(--felt-line);
+  border-radius:8px;
+  background:rgba(0,0,0,0.16);
+}
+
+.derived-name{
+  font-size:0.8rem;
+  font-weight:600;
+  color:var(--cream);
+}
+
+.derived-strip{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  overflow-x:auto;
+  min-width:0;
+}
+
+.derived-dot{
+  flex-shrink:0;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+}
+.derived-dot.red{background:var(--bad);}
+.derived-dot.blue{background:var(--player);}
+
+.derived-empty{
+  font-size:0.72rem;
+  color:var(--muted);
+}
+
+.derived-latest{
+  font-size:0.72rem;
+  white-space:nowrap;
+  padding:0.15rem 0.5rem;
+  border-radius:999px;
+  border:1px solid var(--felt-line);
+  color:var(--muted);
+}
+.derived-latest.red{border-color:var(--bad); color:var(--bad);}
+.derived-latest.blue{border-color:var(--player); color:var(--player-soft);}
+
+.derived-note{
+  margin:0;
+  font-size:0.74rem;
+  color:var(--muted);
+  line-height:1.5;
+}
+
 .money-card{
   margin-top:1.2rem;
 }
