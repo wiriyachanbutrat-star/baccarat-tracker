@@ -94,15 +94,6 @@ function nonTieFor(winners){
   return winners.filter(r => r !== 'T');
 }
 
-function isChop(nt){
-  if (nt.length < 4) return false;
-  const last4 = nt.slice(-4);
-  for (let i = 1; i < last4.length; i++){
-    if (last4[i] === last4[i-1]) return false;
-  }
-  return true;
-}
-
 // Groups a winners sequence into Big Road columns: consecutive same-side
 // wins stack into the same column; a change of side starts a new column;
 // ties don't break a column, they're just skipped (Big Road doesn't track
@@ -144,30 +135,6 @@ function buildBigRoadCells(winners){
     }
   }
   return columns;
-}
-
-// Generic derived-road algorithm: Big Eye Boy (k=1), Small Road (k=2), and
-// Cockroach Road (k=3) are all the same rule at increasing look-back offsets.
-// For the Big Road entry at column c, row r (0-indexed):
-//  - if it continues a column (r > 0): compare to column (c-k) — red if that
-//    column reaches row r, blue if it's shorter.
-//  - if it starts a new column (r === 0): compare the lengths of columns
-//    (c-k) and (c-k-1) — red if equal, blue if different.
-// Points are only produced once enough columns exist to make the comparison.
-function deriveRoad(columns, k){
-  const points = [];
-  for (let c = 0; c < columns.length; c++){
-    for (let r = 0; r < columns[c].length; r++){
-      if (r > 0){
-        if (c - k < 0) continue;
-        points.push({ c, r, color: columns[c - k].length > r ? 'red' : 'blue' });
-      } else {
-        if (c - k - 1 < 0) continue;
-        points.push({ c, r, color: columns[c - k].length === columns[c - k - 1].length ? 'red' : 'blue' });
-      }
-    }
-  }
-  return points;
 }
 
 // The folk pattern names Thai baccarat players call out loud while
@@ -224,34 +191,13 @@ function detectNamedPattern(columns){
   return null;
 }
 
-const DERIVED_ROADS = [
-  { key: 'beb', name: 'Big Eye Boy', k: 1 },
-  { key: 'small', name: 'Small Road', k: 2 },
-  { key: 'roach', name: 'Cockroach Road', k: 3 },
-];
-
-// Computes all three derived roads from a winners sequence, for both the
-// recommendation engine and the on-screen road strips.
-function computeDerivedRoads(winners){
-  const columns = buildBigRoadColumns(winners);
-  return DERIVED_ROADS.map(road => ({
-    ...road,
-    points: deriveRoad(columns, road.k),
-  }));
-}
-
-// Reads Big Eye Boy / Small Road / Cockroach Road — the three "roads
-// derived from the road" that pattern players in real baccarat rooms watch
-// once the Big Road has enough columns. Convention: red ("the pattern
-// repeats") is read as a Banker signal, blue ("the pattern breaks") as a
-// Player signal — this mapping is exactly what's printed on physical
-// scoreboards. Majority of the 3 roads' latest dot decides the pick; until
-// there are enough columns for any of them to plot, falls back to a simple
-// streak/chop/ratio read of the bead road so there's still an answer early.
+// Only reads Dragon / Ping-Pong / Two-Cut-One off the Big Road. If none of
+// the three match, there's no clear call — return no pick rather than
+// reaching for a weaker signal, so the UI can honestly show "รอวิเคราะห์"
+// instead of forcing an answer.
 // Important: baccarat hands are independent draws — none of this actually
 // shifts the probability of the next hand. Real long-run accuracy sits at
-// the game's base rate (~45-50%), same as a coin flip weighted by house
-// odds — the fixed accuracy-badge in the UI carries that disclaimer always.
+// the game's base rate (~45-50%), same as a coin flip weighted by house odds.
 function getSuggestion(winners){
   if (winners.length === 0){
     return { pick: null, confidence: null, reasonText: 'ยังไม่มีข้อมูลให้วิเคราะห์' };
@@ -262,60 +208,12 @@ function getSuggestion(winners){
   }
 
   const columns = buildBigRoadColumns(winners);
-
   const named = detectNamedPattern(columns);
   if (named){
     return { pick: named.pick, confidence: named.label, reasonText: named.reasonText };
   }
 
-  const roads = DERIVED_ROADS.map(road => ({ ...road, points: deriveRoad(columns, road.k) }));
-  const votes = roads.map(r => r.points.length ? r.points[r.points.length - 1].color : null).filter(Boolean);
-  const redVotes = votes.filter(v => v === 'red').length;
-  const blueVotes = votes.filter(v => v === 'blue').length;
-
-  if (votes.length > 0 && redVotes !== blueVotes){
-    const pick = redVotes > blueVotes ? 'B' : 'P';
-    const detail = roads.map(r => {
-      const latest = r.points.length ? r.points[r.points.length - 1].color : null;
-      return `${r.name}=${latest === 'red' ? 'แดง' : latest === 'blue' ? 'น้ำเงิน' : 'ยังไม่มีข้อมูล'}`;
-    }).join(', ');
-    return {
-      pick,
-      confidence: 'อ่านจากเส้นสายรอง',
-      reasonText: `${detail} (${redVotes} แดง : ${blueVotes} น้ำเงิน) — เส้นสายรองส่วนใหญ่ชี้ไปทาง ${pick === 'B' ? 'Banker' : 'Player'}`,
-    };
-  }
-
-  // Fallback while the derived roads don't have enough columns yet to plot
-  // (or land in an exact tie): read the bead road directly instead.
-  const streak = currentStreakFor(winners);
-  let pick, reasonText, confidence;
-
-  if (streak.side && streak.len >= 2){
-    pick = streak.side;
-    confidence = streak.len >= 4 ? 'สตรีคยาว' : 'ตามสตรีค';
-    reasonText = `ฝั่งนี้ชนะติดต่อกัน ${streak.len} ตา รูปแบบเบดโรดมักถูกเล่นแบบ "ตามมังกร" จนกว่าจะเปลี่ยนเจ้า (เส้นสายรองยังไม่พอให้อ่าน)`;
-  } else if (isChop(nt)){
-    const last = nt[nt.length - 1];
-    pick = last === 'P' ? 'B' : 'P';
-    confidence = 'สลับฟันปลา';
-    reasonText = 'ผลล่าสุดสลับ Player/Banker ไปมาต่อเนื่อง (รูปแบบชนวน) จึงมองไปทางฝั่งตรงข้ามของตาก่อนหน้า (เส้นสายรองยังไม่พอให้อ่าน)';
-  } else {
-    const recent = nt.slice(-10);
-    const pCount = recent.filter(r => r === 'P').length;
-    const bCount = recent.filter(r => r === 'B').length;
-    if (pCount === bCount){
-      pick = nt[nt.length - 1];
-      confidence = 'สูสี';
-      reasonText = `10 ตาล่าสุดสูสีกัน (Player ${pCount} : Banker ${bCount}) จึงอิงตามผลล่าสุดไปก่อน`;
-    } else {
-      pick = pCount > bCount ? 'P' : 'B';
-      confidence = 'อิงสัดส่วน';
-      reasonText = `ใน 10 ตาล่าสุด ${pick === 'P' ? 'Player' : 'Banker'} ออกบ่อยกว่า (${Math.max(pCount,bCount)} จาก ${recent.length} ตา)`;
-    }
-  }
-
-  return { pick, confidence, reasonText };
+  return { pick: null, confidence: null, reasonText: 'รอวิเคราะห์ — ยังไม่เข้ารูปแบบมังกร, ปิงปอง หรือสองตัดหนึ่งที่ชัดเจน' };
 }
 
 // Replays the history: the first WARMUP_ROUNDS results are observation only
@@ -495,7 +393,7 @@ function renderRecommendation(sim, baseBet){
   if (!sugg.pick){
     chip.className = 'side-chip none';
     chip.textContent = '?';
-    call.textContent = 'ยังไม่พอวิเคราะห์';
+    call.textContent = 'รอวิเคราะห์';
     reason.textContent = sugg.reasonText;
     els.nextBetAmount.textContent = '—';
     els.stepTag.textContent = `ไม้ ${sim.step + 1}/${MULTIPLIERS.length}`;
@@ -510,33 +408,6 @@ function renderRecommendation(sim, baseBet){
   const nextAmount = baseBet * MULTIPLIERS[sim.step];
   els.nextBetAmount.textContent = '฿' + formatMoney(nextAmount);
   els.stepTag.textContent = `ไม้ ${sim.step + 1}/${MULTIPLIERS.length}`;
-}
-
-function renderDerivedRoads(){
-  const winners = rounds.map(x => x.winner);
-  const roads = computeDerivedRoads(winners);
-
-  roads.forEach(road => {
-    const strip = document.getElementById('strip-' + road.key);
-    const latestEl = document.getElementById('latest-' + road.key);
-    if (!strip || !latestEl) return;
-
-    strip.innerHTML = '';
-    const shown = road.points.slice(-14);
-    if (shown.length === 0){
-      strip.innerHTML = '<span class="derived-empty">ยังไม่มีข้อมูลพอ</span>';
-    } else {
-      shown.forEach(p => {
-        const dot = document.createElement('span');
-        dot.className = 'derived-dot ' + p.color;
-        strip.appendChild(dot);
-      });
-    }
-
-    const latest = road.points.length ? road.points[road.points.length - 1].color : null;
-    latestEl.className = 'derived-latest' + (latest ? ' ' + latest : '');
-    latestEl.textContent = latest === 'red' ? 'แดง · Banker' : latest === 'blue' ? 'น้ำเงิน · Player' : 'รอข้อมูล';
-  });
 }
 
 function renderTableStatus(sim, baseBet){
@@ -633,7 +504,6 @@ function updateUI(){
 
   renderBeadRoad();
   renderBigRoad();
-  renderDerivedRoads();
 
   const baseBet = Math.max(1, Number(els.baseBet.value) || 20);
   const sim = simulateMoney(baseBet);
