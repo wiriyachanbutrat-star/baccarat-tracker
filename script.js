@@ -246,6 +246,9 @@ function detectNamedPattern(columns){
     };
   }
 
+  const fourCut = detectCutRhythm(columns, 4, 'สี่ตัดหนึ่ง (Four-Cut-One)');
+  if (fourCut) return fourCut;
+
   const threeCut = detectCutRhythm(columns, 3, 'สามตัดหนึ่ง (Three-Cut-One)');
   if (threeCut) return threeCut;
 
@@ -280,7 +283,7 @@ function getSuggestion(winners){
     return { pick: named.pick, confidence: named.label, reasonText: named.reasonText };
   }
 
-  return { pick: null, confidence: null, reasonText: 'รอวิเคราะห์ — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สามตัดหนึ่ง, สองตัดหนึ่ง หรือคู่ที่ชัดเจน' };
+  return { pick: null, confidence: null, reasonText: 'รอวิเคราะห์ — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง, สองตัดหนึ่ง หรือคู่ที่ชัดเจน' };
 }
 
 // Replays the history: the first WARMUP_ROUNDS results are observation only
