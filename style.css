@@ -33,19 +33,19 @@ html,body{
 }
 
 body{
-  padding:2.5rem 1.5rem 4rem;
+  padding:1.6rem 1.25rem 2rem;
   display:flex;
   justify-content:center;
 }
 
 .table-frame{
   width:100%;
-  max-width:980px;
+  max-width:1220px;
 }
 
 header{
   text-align:center;
-  margin-bottom:1.8rem;
+  margin-bottom:1.1rem;
 }
 
 .eyebrow{
@@ -77,12 +77,12 @@ h1{
 .layout{
   display:grid;
   grid-template-columns:minmax(0,1fr);
-  gap:1.2rem;
+  gap:1rem;
 }
 
 @media (min-width:820px){
   .layout{
-    grid-template-columns: 1.15fr 0.85fr;
+    grid-template-columns: 1fr 1fr;
     align-items:start;
   }
 }
@@ -90,7 +90,7 @@ h1{
 .col{
   display:flex;
   flex-direction:column;
-  gap:1.2rem;
+  gap:1rem;
   min-width:0;
 }
 
@@ -98,7 +98,7 @@ h1{
   background:linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.01));
   border:1px solid var(--felt-line);
   border-radius:var(--panel-radius);
-  padding:1.3rem 1.4rem;
+  padding:1.1rem 1.25rem;
   box-shadow:var(--shadow);
 }
 
@@ -106,7 +106,7 @@ h1{
   display:flex;
   align-items:center;
   gap:1.1rem;
-  padding:1.25rem 1.5rem;
+  padding:1.1rem 1.3rem;
   border-radius:var(--panel-radius);
   border:1px solid var(--gold);
   background:linear-gradient(135deg, rgba(201,162,39,0.16), rgba(201,162,39,0.03));
@@ -164,6 +164,17 @@ h1{
   color:var(--gold-soft);
   font-family:Georgia,serif;
   font-size:1rem;
+}
+
+.recommend-text .tie-line{
+  margin:0.3rem 0 0;
+  font-size:0.78rem;
+  color:var(--muted);
+}
+
+.recommend-text .tie-line strong{
+  color:var(--tie);
+  font-weight:600;
 }
 
 .step-tag{

@@ -45,6 +45,7 @@ const els = {
   roomFitTitle: document.getElementById('roomFitTitle'),
   roomFitGood: document.getElementById('roomFitGood'),
   roomFitBad: document.getElementById('roomFitBad'),
+  tieStreakText: document.getElementById('tieStreakText'),
 }
 
 document.getElementById('btn-player').addEventListener('click', ()=>addResult('P'))
@@ -106,6 +107,19 @@ function currentStreakFor(winners){
 
 function nonTieFor(winners){
   return winners.filter(r => r !== 'T');
+}
+
+// Hands since the last Tie (or since the start, if none yet). Standard
+// 8-deck odds put Tie at 9.52% per hand, so it "should" land roughly every
+// ~10.5 hands on average — this is just an observed gap, not a prediction:
+// ties are exactly as independent as everything else in this game.
+function tieGapFor(winners){
+  let gap = 0;
+  for (let i = winners.length - 1; i >= 0; i--){
+    if (winners[i] === 'T') break;
+    gap++;
+  }
+  return gap;
 }
 
 // Groups a winners sequence into Big Road columns: consecutive same-side
@@ -515,6 +529,22 @@ function renderRecommendation(sim, baseBet){
   els.stepTag.textContent = `ไม้ ${sim.step + 1}/${MULTIPLIERS.length}`;
 }
 
+function renderTieLine(){
+  const winners = rounds.map(x => x.winner);
+  if (winners.length === 0){
+    els.tieStreakText.textContent = 'รอข้อมูล';
+    return;
+  }
+  const gap = tieGapFor(winners);
+  if (gap === 0){
+    els.tieStreakText.textContent = 'เพิ่งออกเสมอตาที่แล้ว';
+  } else if (gap >= 15){
+    els.tieStreakText.textContent = `ไม่ออกมา ${gap} ตาแล้ว (เกินค่าเฉลี่ย ~10 ตา แต่ EV แทงเสมอแย่ที่สุด −14.36% จึงยังไม่แนะนำ)`;
+  } else {
+    els.tieStreakText.textContent = `ไม่ออกมา ${gap} ตาแล้ว (เฉลี่ยควรออกทุก ~10 ตา)`;
+  }
+}
+
 function renderTableStatus(sim, baseBet){
   const health = evaluateTableHealth(sim, baseBet);
   const box = els.tableStatus;
@@ -647,6 +677,7 @@ function updateUI(){
   const baseBet = Math.max(1, Number(els.baseBet.value) || 20);
   const sim = simulateMoney(baseBet);
   renderRecommendation(sim, baseBet);
+  renderTieLine();
   renderMoney(sim);
   renderTableStatus(sim, baseBet);
   renderRoomFit();
