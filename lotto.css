@@ -247,32 +247,71 @@ h1{
 
 .alt-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:0.7rem;
+  grid-template-columns:repeat(3, 1fr);
+  gap:0.6rem;
 }
 
 .alt-tile{
   text-align:center;
-  padding:0.8rem 0.5rem;
+  padding:0.7rem 0.4rem;
   border-radius:9px;
   background:rgba(0,0,0,0.18);
   border:1px solid var(--felt-line);
 }
 
 .alt-label{
-  font-size:0.7rem;
+  font-size:0.66rem;
   text-transform:uppercase;
-  letter-spacing:0.08em;
+  letter-spacing:0.06em;
   color:var(--muted);
   margin-bottom:0.35rem;
+  line-height:1.3;
 }
 
 .alt-number{
   font-family:Georgia,serif;
-  font-size:1.5rem;
+  font-size:1.3rem;
   font-weight:700;
-  letter-spacing:0.12em;
+  letter-spacing:0.1em;
   color:var(--gold-soft);
+}
+
+.trend-detail{
+  display:flex;
+  flex-direction:column;
+  gap:0.5rem;
+}
+
+.trend-row{
+  display:grid;
+  grid-template-columns:5.5rem 1fr auto;
+  align-items:center;
+  gap:0.7rem;
+  padding:0.5rem 0.7rem;
+  border-radius:8px;
+  background:rgba(0,0,0,0.16);
+  border:1px solid var(--felt-line);
+  font-size:0.8rem;
+}
+
+.trend-pos{
+  color:var(--cream);
+  font-weight:600;
+}
+
+.trend-diffs{
+  color:var(--muted);
+  font-size:0.76rem;
+}
+
+.trend-calc{
+  color:var(--muted);
+  white-space:nowrap;
+}
+.trend-calc strong{
+  color:var(--gold-soft);
+  font-family:Georgia,serif;
+  font-size:1rem;
 }
 
 .freq-grid{

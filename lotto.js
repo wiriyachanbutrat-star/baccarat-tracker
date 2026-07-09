@@ -1,7 +1,11 @@
+const POSITION_NAMES = ['หลักพัน', 'หลักร้อย', 'หลักสิบ', 'หลักหน่วย'];
+
 const els = {
   errorLine: document.getElementById('errorLine'),
+  trendNumber: document.getElementById('trendNumber'),
+  trendReason: document.getElementById('trendReason'),
+  trendDetail: document.getElementById('trendDetail'),
   modeNumber: document.getElementById('modeNumber'),
-  modeReason: document.getElementById('modeReason'),
   avgNumber: document.getElementById('avgNumber'),
   reverseNumber: document.getElementById('reverseNumber'),
   freqGrid: document.getElementById('freqGrid'),
@@ -17,8 +21,10 @@ document.getElementById('btn-clear').addEventListener('click', clearAll);
 function clearAll(){
   inputs.forEach(inp => { inp.value = ''; inp.classList.remove('invalid'); });
   els.errorLine.textContent = '';
-  els.modeNumber.textContent = '— — — —';
-  els.modeReason.textContent = 'กรอกผลย้อนหลังให้ครบ 5 งวดแล้วกดคำนวณ';
+  els.trendNumber.textContent = '— — — —';
+  els.trendReason.textContent = 'กรอกผลย้อนหลังให้ครบ 5 งวดแล้วกดคำนวณ';
+  els.trendDetail.innerHTML = '';
+  els.modeNumber.textContent = '—';
   els.avgNumber.textContent = '—';
   els.reverseNumber.textContent = '—';
   els.hotDigits.textContent = '—';
@@ -47,20 +53,24 @@ function calculate(){
   }
   els.errorLine.textContent = '';
 
-  const positional = positionalMode(draws);
-  const modeDigits = positional.map(p => p.digit);
-  const modeStr = modeDigits.join('');
-  els.modeNumber.textContent = modeStr;
+  const trend = trendPrediction(draws);
+  const trendStr = trend.map(p => p.predicted).join('');
+  els.trendNumber.textContent = trendStr;
 
-  const tieCount = positional.filter(p => p.tied.length > 1).length;
-  els.modeReason.textContent = tieCount === 0
-    ? `นำเลขที่ออกบ่อยที่สุดในแต่ละหลัก (พัน-ร้อย-สิบ-หน่วย) จาก 5 งวดที่กรอกมาต่อกัน`
-    : `นำเลขที่ออกบ่อยที่สุดในแต่ละหลักมาต่อกัน — มี ${tieCount} หลักที่คะแนนเท่ากันหลายตัว ระบบเลือกเลขที่น้อยที่สุดในกลุ่มที่เท่ากันให้`;
+  const consistentCount = trend.filter(p => p.consistent).length;
+  els.trendReason.textContent = consistentCount === 4
+    ? 'ทั้ง 4 หลักมีผลต่างระหว่างงวดสม่ำเสมอ (ค่าเดิมซ้ำทุกช่วง) จึงต่อแนวโน้มจากงวดล่าสุดตรง ๆ'
+    : `เทียบผลต่างระหว่างงวดที่ติดกันทีละคู่ในแต่ละหลัก แล้วใช้ผลต่างที่พบบ่อยที่สุดบวกต่อจากงวดล่าสุด (${consistentCount}/4 หลักมีจังหวะสม่ำเสมอ ที่เหลือเลือกจากผลต่างที่ซ้ำบ่อยสุด)`;
+
+  renderTrendDetail(trend);
+
+  const positional = positionalMode(draws);
+  els.modeNumber.textContent = positional.map(p => p.digit).join('');
 
   const avgValue = Math.round(draws.reduce((sum, d) => sum + Number(d.join('')), 0) / draws.length);
   els.avgNumber.textContent = String(avgValue).padStart(4, '0');
 
-  els.reverseNumber.textContent = modeStr.split('').reverse().join('');
+  els.reverseNumber.textContent = trendStr.split('').reverse().join('');
 
   const freq = overallFrequency(draws);
   renderFreqGrid(freq);
@@ -70,6 +80,45 @@ function calculate(){
   const cold = freq.map((c, d) => ({ d, c })).filter(x => x.c === 0).map(x => x.d);
   els.hotDigits.textContent = hot.length ? hot.join(', ') : 'ไม่มี (ทุกเลขออกเท่า ๆ กัน)';
   els.coldDigits.textContent = cold.length ? cold.join(', ') : 'ไม่มี (ครบทุกเลข 0-9)';
+}
+
+// For each of the 4 positions, compares each draw to the one right before
+// it (mod 10, since digits wrap 0-9) to get a sequence of 4 differences.
+// The most common difference in that sequence is treated as "the trend" and
+// added to the newest draw's digit to project the next one. If every
+// difference in the sequence matches, the trend is fully consistent.
+function trendPrediction(draws){
+  const result = [];
+  for (let pos = 0; pos < 4; pos++){
+    const diffs = [];
+    for (let i = 1; i < draws.length; i++){
+      diffs.push(((draws[i][pos] - draws[i - 1][pos]) % 10 + 10) % 10);
+    }
+    const counts = new Array(10).fill(0);
+    diffs.forEach(d => counts[d]++);
+    const maxCount = Math.max(...counts);
+    const bestDiff = counts.findIndex(c => c === maxCount);
+    const consistent = diffs.every(d => d === diffs[0]);
+    const lastDigit = draws[draws.length - 1][pos];
+    const predicted = (lastDigit + bestDiff) % 10;
+    result.push({ pos, diffs, bestDiff, consistent, lastDigit, predicted });
+  }
+  return result;
+}
+
+function renderTrendDetail(trend){
+  els.trendDetail.innerHTML = '';
+  trend.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'trend-row';
+    const diffText = p.diffs.map(d => '+' + d).join(', ');
+    row.innerHTML = `
+      <span class="trend-pos">${POSITION_NAMES[p.pos]}</span>
+      <span class="trend-diffs">Δ ${diffText}</span>
+      <span class="trend-calc">${p.lastDigit} ${p.bestDiff >= 0 ? '+' : ''}${p.bestDiff} → <strong>${p.predicted}</strong></span>
+    `;
+    els.trendDetail.appendChild(row);
+  });
 }
 
 // For each of the 4 positions (thousands, hundreds, tens, units), finds the

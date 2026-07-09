@@ -11,7 +11,7 @@
     <header>
       <p class="eyebrow">Lao Lottery Helper</p>
       <h1>คำนวณหวยลาว 4 ตัวตรง</h1>
-      <p class="lead">กรอกผลย้อนหลัง 5 งวดล่าสุด ระบบจะวิเคราะห์ทางสถิติหาเลขที่ใกล้เคียงที่สุดให้ (ไม่ใช่การทำนายผลจริง — ดูหมายเหตุท้ายหน้า)</p>
+      <p class="lead">กรอกผลย้อนหลัง 5 งวดล่าสุด ระบบจะเทียบค่าเก่าทีละงวดหาแนวโน้มผลต่างของแต่ละหลัก แล้วคาดการณ์ค่าถัดไปให้ (ไม่ใช่การทำนายผลจริง — ดูหมายเหตุท้ายหน้า)</p>
       <a class="nav-link" href="index.html">← ไปหน้าเว็บบาคาร่า</a>
     </header>
 
@@ -52,20 +52,29 @@
 
       <div class="col">
         <div class="result-card" id="resultCard">
-          <p class="label">เลขเด่นจากสถิติตำแหน่ง</p>
-          <p class="headline" id="modeNumber">— — — —</p>
-          <p class="reason" id="modeReason">กรอกผลย้อนหลังให้ครบ 5 งวดแล้วกดคำนวณ</p>
+          <p class="label">เลขคาดการณ์จากแนวโน้มผลต่าง</p>
+          <p class="headline" id="trendNumber">— — — —</p>
+          <p class="reason" id="trendReason">กรอกผลย้อนหลังให้ครบ 5 งวดแล้วกดคำนวณ</p>
         </div>
+
+        <section class="card">
+          <h2 class="section-title">รายละเอียดแนวโน้มแต่ละหลัก</h2>
+          <div class="trend-detail" id="trendDetail"></div>
+        </section>
 
         <section class="card">
           <h2 class="section-title">เลขทางเลือกอื่น</h2>
           <div class="alt-grid">
             <div class="alt-tile">
+              <div class="alt-label">เลขเด่นจากสถิติตำแหน่ง</div>
+              <div class="alt-number" id="modeNumber">—</div>
+            </div>
+            <div class="alt-tile">
               <div class="alt-label">เลขเฉลี่ย</div>
               <div class="alt-number" id="avgNumber">—</div>
             </div>
             <div class="alt-tile">
-              <div class="alt-label">เลขกลับของเลขเด่น</div>
+              <div class="alt-label">เลขกลับของเลขแนวโน้ม</div>
               <div class="alt-number" id="reverseNumber">—</div>
             </div>
           </div>
