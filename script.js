@@ -1,5 +1,6 @@
 const rounds = [];
 const MULTIPLIERS = [1, 2, 4]; // ทบ 3 ไม้: x1 -> x2 -> x4 แล้วตัดจบกลับไม้ 1
+const WARMUP_ROUNDS = 6; // ต้องบันทึกผลอย่างน้อย 6 ตาก่อน ถึงจะเริ่มแนะนำ/แทงจริง
 
 // Standard 8-deck baccarat probabilities (widely published reference odds).
 // House edge per 1 unit staked, after Banker's 5% commission on wins.
@@ -102,10 +103,12 @@ function getSuggestion(){
   };
 }
 
-// Replays the whole history: every round is bet on the fixed EV pick above,
-// compared to the actual result to drive the 3-step (1x/2x/4x) progression.
-// A cycle only counts as "เสีย" once all 3 steps have lost in a row — a loss
-// on step 1 or 2 just carries the progression forward, it isn't tallied yet.
+// Replays the history: the first WARMUP_ROUNDS results are observation only
+// (no bet placed, nothing tallied) so there's a baseline read on the room
+// before any money moves. From round 7 onward every round is bet on the
+// fixed EV pick above, compared to the actual result to drive the 3-step
+// (1x/2x/4x) progression. A cycle only counts as "เสีย" once all 3 steps
+// have lost in a row — a loss on step 1 or 2 just carries it forward.
 function simulateMoney(baseBet){
   let step = 0; // 0-indexed into MULTIPLIERS
   let netProfit = 0;
@@ -114,7 +117,7 @@ function simulateMoney(baseBet){
   const log = [];
   const sugg = getSuggestion();
 
-  for (let i = 0; i < rounds.length; i++){
+  for (let i = WARMUP_ROUNDS; i < rounds.length; i++){
     const actual = rounds[i].winner;
     const betAmount = baseBet * MULTIPLIERS[step];
     maxStep = Math.max(maxStep, step + 1);
@@ -201,8 +204,19 @@ function renderRecommendation(sim, baseBet){
   const chip = els.chipIcon;
   const call = els.suggestCall;
   const reason = els.suggestReason;
-  const sugg = getSuggestion();
 
+  if (rounds.length < WARMUP_ROUNDS){
+    const remaining = WARMUP_ROUNDS - rounds.length;
+    chip.className = 'side-chip none';
+    chip.textContent = String(rounds.length);
+    call.textContent = `กำลังเก็บข้อมูล (${rounds.length}/${WARMUP_ROUNDS} ตา)`;
+    reason.textContent = `บันทึกผลอีก ${remaining} ตาก่อน ระบบจะเริ่มแนะนำฝั่งที่ควรแทงและจำนวนเงิน`;
+    els.nextBetAmount.textContent = '—';
+    els.stepTag.textContent = `รออีก ${remaining} ตา`;
+    return;
+  }
+
+  const sugg = getSuggestion();
   chip.className = 'side-chip ' + (sugg.pick === 'P' ? 'player' : 'banker');
   chip.textContent = sugg.pick;
   call.textContent = `แทง ${sugg.pick === 'P' ? 'Player' : 'Banker'} — ${sugg.confidence}`;
@@ -256,7 +270,9 @@ function renderMoney(sim){
   if (sim.log.length === 0){
     const li = document.createElement('li');
     li.className = 'money-log-empty';
-    li.textContent = 'ยังไม่มีตาที่เดิมพัน กดบันทึกผลด้านบนเพื่อเริ่ม';
+    li.textContent = rounds.length < WARMUP_ROUNDS
+      ? `ยังอยู่ในช่วงเก็บข้อมูล (${rounds.length}/${WARMUP_ROUNDS} ตา) ยังไม่เริ่มแทงจริง`
+      : 'ยังไม่มีตาที่เดิมพัน กดบันทึกผลด้านบนเพื่อเริ่ม';
     els.moneyLog.appendChild(li);
     return;
   }
