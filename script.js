@@ -205,36 +205,18 @@ function detectCutRhythm(columns, L, label){
   return null; // streak ran past L, the rhythm already broke
 }
 
-// Loose, single-occurrence "คู่" (Pair) read: the most recently completed
-// column is exactly 2 long, with no rhythm history behind it (that stronger
-// case is สองตัดหนึ่ง above). Gamblers commonly read an isolated pair as due
-// to get cut. Weakest of the named patterns — checked last, right before
-// giving up and showing "รอวิเคราะห์".
-function detectPair(columns){
-  if (columns.length < 2) return null;
-  const last = columns[columns.length - 1];
-  if (last.length !== 2) return null;
-  const pick = last[0] === 'P' ? 'B' : 'P';
-  return {
-    pick,
-    label: 'คู่ (Pair)',
-    reasonText: `ฝั่ง ${sideName(last[0])} เพิ่งออกครบคู่ (2 ตาติด) — จังหวะคู่มักถูกมองว่าใกล้ถึงตาตัดสลับไปฝั่ง ${sideName(pick)}`,
-  };
-}
-
-// The folk pattern names Thai baccarat players call out loud while watching
-// the Big Road, checked strongest/most specific first: a live streak
-// (Dragon) is the most obvious read; then strict alternation (Ping Pong);
-// then repeat-length rhythms confirmed over two full cycles (Three-Cut-One,
-// Two-Cut-One); then a bare, unconfirmed pair (Pair) as the last resort
-// before admitting there's nothing clear to call.
+// Only the strongest, clearest folk-pattern reads qualify as an actual
+// recommendation — the user asked to recommend a bet only when confident,
+// not on every round. So the weak, single-occurrence "คู่" (Pair) read has
+// been dropped entirely, and Dragon/Ping-Pong now require a longer confirmed
+// run before they count, checked strongest/most specific first.
 function detectNamedPattern(columns){
   if (columns.length === 0) return null;
   const last = columns[columns.length - 1];
   const lastLen = last.length;
   const lastSide = last[0];
 
-  if (lastLen >= 3){
+  if (lastLen >= 4){
     return {
       pick: lastSide,
       label: 'มังกร (Dragon)',
@@ -242,12 +224,12 @@ function detectNamedPattern(columns){
     };
   }
 
-  if (columns.length >= 4 && columns.slice(-4).every(c => c.length === 1)){
+  if (columns.length >= 6 && columns.slice(-6).every(c => c.length === 1)){
     const pick = lastSide === 'P' ? 'B' : 'P';
     return {
       pick,
       label: 'ปิงปอง (Ping Pong)',
-      reasonText: `Banker/Player สลับกันไปมาต่อเนื่องอย่างน้อย 4 ตา (ปิงปอง) จึงมองว่าจะสลับต่อไปทางฝั่ง ${sideName(pick)}`,
+      reasonText: `Banker/Player สลับกันไปมาต่อเนื่องอย่างน้อย 6 ตา (ปิงปอง) จึงมองว่าจะสลับต่อไปทางฝั่ง ${sideName(pick)}`,
     };
   }
 
@@ -259,9 +241,6 @@ function detectNamedPattern(columns){
 
   const twoCut = detectCutRhythm(columns, 2, 'สองตัดหนึ่ง (Two-Cut-One)');
   if (twoCut) return twoCut;
-
-  const pair = detectPair(columns);
-  if (pair) return pair;
 
   return null;
 }
@@ -290,11 +269,13 @@ function deriveBigEyeBoy(columns){
   return points;
 }
 
-// Only reads named Big Road patterns first (Dragon, Ping-Pong, Four/Three/
-// Two-Cut-One, Pair) since those are the clearest, most specific reads.
-// Once none of those match, falls back to Big Eye Boy's latest dot. If even
-// that has no data yet, it's honestly "ไม่มีเค้า" (no pattern) rather than a
-// forced guess.
+// Only reads the strongest, clearest named Big Road patterns (Dragon,
+// Ping-Pong, Four/Three/Two-Cut-One). Big Eye Boy stays as a visual-only
+// strip (deriveBigEyeBoy/renderBigEyeBoy) — it's a weak derived signal and
+// is deliberately NOT used to trigger a bet recommendation. The user asked
+// for recommendations only when confident, not on every round, so anything
+// short of a strong named pattern honestly reports "ไม่มีเค้า" (no pattern)
+// rather than forcing a guess every round.
 // Important: baccarat hands are independent draws — none of this actually
 // shifts the probability of the next hand. Real long-run accuracy sits at
 // the game's base rate (~45-50%), same as a coin flip weighted by house odds.
@@ -313,18 +294,7 @@ function getSuggestion(winners){
     return { pick: named.pick, confidence: named.label, reasonText: named.reasonText };
   }
 
-  const bebPoints = deriveBigEyeBoy(columns);
-  if (bebPoints.length > 0){
-    const latest = bebPoints[bebPoints.length - 1].color;
-    const pick = latest === 'red' ? 'B' : 'P';
-    return {
-      pick,
-      confidence: 'Big Eye Boy',
-      reasonText: `เค้าตาแดง/ตาน้ำเงินเล็กล่าสุดขึ้น${latest === 'red' ? 'แดง (รูปแบบซ้ำ)' : 'น้ำเงิน (รูปแบบเปลี่ยน)'} จึงมองไปทาง ${pick === 'B' ? 'Banker' : 'Player'}`,
-    };
-  }
-
-  return { pick: null, confidence: null, reasonText: 'ไม่มีเค้า (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง, สองตัดหนึ่ง, คู่ หรือ Big Eye Boy ที่ชัดเจน' };
+  return { pick: null, confidence: null, reasonText: 'ไม่มีเค้าที่มั่นใจพอ (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง หรือสองตัดหนึ่งที่ชัดเจนพอจะแนะนำ ระบบจะรอจนกว่าจะมั่นใจ' };
 }
 
 // Replays the history: the first WARMUP_ROUNDS results are observation only
