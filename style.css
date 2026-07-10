@@ -196,6 +196,18 @@ h1{
   display:none;
 }
 
+.recommend-text .pct-badge{
+  display:inline-block;
+  margin:0 0 0.3rem;
+  padding:0.15rem 0.55rem;
+  border-radius:999px;
+  font-size:0.75rem;
+  font-weight:600;
+  color:var(--gold-soft);
+  background:rgba(201,162,39,0.16);
+  border:1px solid var(--gold);
+}
+
 .recommend-text .bet-line{
   margin:0.55rem 0 0;
   font-size:0.86rem;

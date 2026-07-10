@@ -17,6 +17,7 @@ const els = {
   playerPct: document.getElementById('player-pct'),
   bankerPct: document.getElementById('banker-pct'),
   suggestCall: document.getElementById('suggest-call'),
+  suggestPct: document.getElementById('suggestPct'),
   suggestReason: document.getElementById('suggest-reason'),
   chipIcon: document.getElementById('chipIcon'),
   rounds: document.getElementById('rounds'),
@@ -604,6 +605,7 @@ function renderRecommendation(sim, baseBet){
     reason.textContent = `บันทึกผลอีก ${remaining} ตาก่อน ระบบจะเริ่มแนะนำฝั่งที่ควรแทงและจำนวนเงิน`;
     els.nextBetAmount.textContent = '—';
     els.stepTag.textContent = `รออีก ${remaining} ตา`;
+    els.suggestPct.hidden = true;
     return;
   }
 
@@ -616,6 +618,7 @@ function renderRecommendation(sim, baseBet){
     reason.textContent = sugg.reasonText;
     els.nextBetAmount.textContent = '—';
     els.stepTag.textContent = `ไม้ ${sim.step + 1}/${MULTIPLIERS.length}`;
+    els.suggestPct.hidden = true;
     return;
   }
 
@@ -623,6 +626,12 @@ function renderRecommendation(sim, baseBet){
   chip.textContent = sugg.pick;
   call.textContent = `แทง ${sugg.pick === 'P' ? 'Player' : 'Banker'} — ${sugg.confidence}`;
   reason.textContent = sugg.reasonText;
+
+  // Shows the game's fixed base rate for the picked side (not a claim that
+  // the pattern raises it) — Banker/Player odds never change hand to hand.
+  const basePct = sugg.pick === 'P' ? ODDS.P * 100 : ODDS.B * 100;
+  els.suggestPct.hidden = false;
+  els.suggestPct.textContent = `โอกาสพื้นฐาน ~${basePct.toFixed(2)}%`;
 
   const nextAmount = baseBet * MULTIPLIERS[sim.step];
   els.nextBetAmount.textContent = '฿' + formatMoney(nextAmount);
