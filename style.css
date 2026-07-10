@@ -161,8 +161,6 @@ h1{
 /* Bead Plate, Big Road, and the stats card stay in the DOM (script.js keeps
    updating them without erroring) but are hidden from view per request —
    not deleted, just tucked away. */
-#beadPlateBlock,
-#bigRoadBlock,
 #bigEyeBoyBlock,
 #statsCard{
   display:none !important;
