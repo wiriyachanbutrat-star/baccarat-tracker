@@ -506,6 +506,22 @@ h1{
 .room-checklist li{padding:0.15rem 0;}
 .room-checklist li::marker{color:var(--gold-soft);}
 
+.history-details{
+  margin-top:1.4rem;
+}
+.history-details summary{
+  cursor:pointer;
+  font-family:Georgia,serif;
+  font-size:1rem;
+  letter-spacing:0.03em;
+  color:var(--gold-soft);
+  list-style:none;
+}
+.history-details summary::-webkit-details-marker{display:none;}
+.history-details summary::before{content:"▸ ";}
+.history-details[open] summary::before{content:"▾ ";}
+.history-details .history{margin-top:0.6rem;}
+
 .room-fit{
   display:flex;
   flex-direction:column;
