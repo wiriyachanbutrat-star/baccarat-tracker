@@ -507,6 +507,27 @@ function getSuggestion(winners){
   return { pick: null, confidence: null, strength: null, reasonText: 'ไม่มีเค้าที่มั่นใจพอ (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง หรือสองตัดหนึ่งที่ชัดเจนพอจะแนะนำ ระบบจะรอจนกว่าจะมั่นใจ' };
 }
 
+// "วิเคราะห์สวนทาง" (fade/contrarian): if the last full 3-step cycle lost,
+// flip the freshly-read pattern's pick for the NEXT cycle instead of
+// repeating it. Requested as "the technical opposite side" when the normal
+// read keeps losing. Important: flipping sides doesn't change the real win
+// probability at all — Banker/Player stay at their fixed base rates no
+// matter which one gets picked — so this is just a different heuristic to
+// choose a side, not a way to beat the math. Labeled honestly in the UI.
+function getFinalSuggestion(winners, consecutiveLosses){
+  const sugg = getSuggestion(winners);
+  if (!sugg.pick || consecutiveLosses < 1) return { ...sugg, faded: false };
+
+  const faded = sugg.pick === 'P' ? 'B' : 'P';
+  return {
+    pick: faded,
+    confidence: `${sugg.confidence} (สวนทาง)`,
+    strength: sugg.strength,
+    faded: true,
+    reasonText: `แนวทางเดิม (${sugg.confidence}) แพ้ครบ 3 ไม้มาแล้ว ${consecutiveLosses} รอบซ้อน ระบบเลยวิเคราะห์สวนทางแทน โดยกลับไปแทงฝั่งตรงข้าม (${faded === 'P' ? 'Player' : 'Banker'}) — การสวนทางไม่ได้ทำให้โอกาสชนะจริงเปลี่ยนไป ยังคงอยู่ที่ค่าพื้นฐานของเกมเหมือนเดิม`,
+  };
+}
+
 // Replays the history: the first WARMUP_ROUNDS results are observation only
 // (no bet placed, nothing tallied) so there's a baseline read on the room
 // before any money moves. From round 7 onward every round is bet on the
@@ -522,7 +543,7 @@ function simulateMoney(baseBet){
 
   for (let i = WARMUP_ROUNDS; i < rounds.length; i++){
     const priorWinners = rounds.slice(0, i).map(x => x.winner);
-    const sugg = getSuggestion(priorWinners);
+    const sugg = getFinalSuggestion(priorWinners, consecutiveLosses);
     if (!sugg.pick) continue;
 
     const actual = rounds[i].winner;
@@ -857,7 +878,7 @@ function renderRecommendation(sim, baseBet){
     return;
   }
 
-  const sugg = getSuggestion(rounds.map(x => x.winner));
+  const sugg = getFinalSuggestion(rounds.map(x => x.winner), sim.consecutiveLosses);
   renderConfidenceGauge(sugg);
 
   if (!sugg.pick){
@@ -887,7 +908,7 @@ function renderGameFix(sim){
   }
 
   const winners = rounds.map(x => x.winner);
-  const freshSugg = getSuggestion(winners);
+  const freshSugg = getFinalSuggestion(winners, sim.consecutiveLosses);
 
   const mismatch = evaluateStatMismatch(winners, freshSugg);
   const fix = mismatch || evaluateGameFix(sim, freshSugg);
