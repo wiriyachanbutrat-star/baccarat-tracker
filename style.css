@@ -191,6 +191,34 @@ h1{
   font-weight:600;
 }
 
+.game-fix{
+  margin-top:0.6rem;
+  padding:0.6rem 0.8rem;
+  border-radius:7px;
+  border:1px solid var(--felt-line);
+  border-left:4px solid var(--carry);
+  background:rgba(201,138,63,0.12);
+}
+.game-fix.loss{
+  border-left-color:var(--bad);
+  background:rgba(168,67,74,0.14);
+}
+
+.game-fix-title{
+  margin:0 0 0.25rem;
+  font-weight:600;
+  font-size:0.85rem;
+  color:var(--carry);
+}
+.game-fix.loss .game-fix-title{color:var(--bad);}
+
+.game-fix-text{
+  margin:0;
+  font-size:0.78rem;
+  color:var(--muted);
+  line-height:1.5;
+}
+
 .step-tag{
   display:inline-block;
   margin-left:0.4rem;

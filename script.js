@@ -46,6 +46,9 @@ const els = {
   roomFitGood: document.getElementById('roomFitGood'),
   roomFitBad: document.getElementById('roomFitBad'),
   tieStreakText: document.getElementById('tieStreakText'),
+  gameFix: document.getElementById('gameFix'),
+  gameFixTitle: document.getElementById('gameFixTitle'),
+  gameFixText: document.getElementById('gameFixText'),
 }
 
 document.getElementById('btn-player').addEventListener('click', ()=>addResult('P'))
@@ -361,6 +364,39 @@ function evaluateTableHealth(sim, baseBet){
   return { shouldStop: reasons.length > 0, reasons, decided, hitRatePct };
 }
 
+// "แก้เกม" (game-fix) advisory: triggers right after a loss. Since
+// getSuggestion() re-reads the Big Road from scratch every round anyway,
+// there's no separate "broken strategy" to swap out — the honest fix here is
+// just to surface, in plain language, what just happened and what the
+// freshly re-read pattern says now, so a loss doesn't get chased blindly.
+function evaluateGameFix(sim, freshSugg){
+  const last = sim.log[sim.log.length - 1];
+  if (!last || last.outcome === 'win' || last.outcome === 'push') return null;
+
+  const lastSideName = last.pick === 'P' ? 'Player' : 'Banker';
+
+  if (last.outcome === 'carry'){
+    const nextPick = freshSugg.pick;
+    return {
+      severity: 'carry',
+      title: `แพ้ไม้ ${last.step} เมื่อกี้ (แทง ${lastSideName})`,
+      text: nextPick
+        ? `กำลังทบไปไม้ถัดไป ระบบวิเคราะห์รูปแบบใหม่จาก Big Road ปัจจุบันแล้ว ไม้นี้ชี้ไปทาง ${nextPick === 'P' ? 'Player' : 'Banker'} (${freshSugg.confidence}) — ไม่ใช่การไล่ตามฝั่งเดิมโดยอัตโนมัติ`
+        : `กำลังทบไปไม้ถัดไป แต่ตอนนี้ยังไม่เข้ารูปแบบไหนชัดเจน (รอวิเคราะห์) พิจารณาความเสี่ยงก่อนเดิมพันไม้ถัดไป`,
+    };
+  }
+
+  // last.outcome === 'loss': lost the full 3-step cycle.
+  const nextPick = freshSugg.pick;
+  return {
+    severity: 'loss',
+    title: `แพ้ครบ 3 ไม้ล่าสุด (เสียเต็มรอบ)`,
+    text: nextPick
+      ? `รอบใหม่เริ่มที่ไม้ 1 ระบบวิเคราะห์ Big Road ใหม่ทั้งหมดแล้ว รอบนี้ชี้ไปทาง ${nextPick === 'P' ? 'Player' : 'Banker'} (${freshSugg.confidence}) หากแพ้ติดกันหลายรอบให้ดูสถานะห้องด้านล่างประกอบการตัดสินใจเปลี่ยนโต๊ะ`
+      : `รอบใหม่เริ่มที่ไม้ 1 แต่ตอนนี้ยังไม่เข้ารูปแบบไหนชัดเจน (รอวิเคราะห์) หากแพ้ติดกันหลายรอบให้ดูสถานะห้องด้านล่างประกอบการตัดสินใจเปลี่ยนโต๊ะ`,
+  };
+}
+
 // A "which room to sit at" read, separate from table-status (which is about
 // whether to keep playing once you're already betting). Replays the whole
 // session the same way simulateMoney does — for each round after the first,
@@ -532,6 +568,26 @@ function renderRecommendation(sim, baseBet){
   els.stepTag.textContent = `ไม้ ${sim.step + 1}/${MULTIPLIERS.length}`;
 }
 
+function renderGameFix(sim){
+  if (rounds.length < WARMUP_ROUNDS){
+    els.gameFix.hidden = true;
+    return;
+  }
+
+  const freshSugg = getSuggestion(rounds.map(x => x.winner));
+  const fix = evaluateGameFix(sim, freshSugg);
+
+  if (!fix){
+    els.gameFix.hidden = true;
+    return;
+  }
+
+  els.gameFix.hidden = false;
+  els.gameFix.className = 'game-fix ' + fix.severity;
+  els.gameFixTitle.textContent = fix.title;
+  els.gameFixText.textContent = fix.text;
+}
+
 function renderTieLine(){
   const winners = rounds.map(x => x.winner);
   if (winners.length === 0){
@@ -680,6 +736,7 @@ function updateUI(){
   const baseBet = Math.max(1, Number(els.baseBet.value) || 20);
   const sim = simulateMoney(baseBet);
   renderRecommendation(sim, baseBet);
+  renderGameFix(sim);
   renderTieLine();
   renderMoney(sim);
   renderTableStatus(sim, baseBet);
