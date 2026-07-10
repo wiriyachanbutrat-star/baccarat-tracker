@@ -83,7 +83,29 @@
           <p class="key-hint">คีย์ลัด: P / B / T บันทึกผล · Z หรือ Backspace ย้อนกลับ</p>
 
           <div class="quick-import">
-            <label class="quick-import-label" for="quickImportInput">ช่องอ่านเฉพาะ — พิมพ์ผลที่อ่านจากรูป (เรียงเก่า→ใหม่ เช่น BBBPPPBTPB)</label>
+            <label class="quick-import-label" for="boardImageInput">อ่านจากรูป — อัปโหลดภาพ Big Road แล้ววางกรอบครอบให้ตรงวงกลม ระบบจะอ่านสีให้</label>
+            <input type="file" id="boardImageInput" accept="image/*" class="board-file-input">
+
+            <div class="board-reader" id="boardReader" hidden>
+              <div class="board-canvas-wrap" id="boardCanvasWrap">
+                <canvas id="boardCanvas"></canvas>
+                <div class="board-handle" id="boardHandleTL" title="ลากมุมนี้ไปตรงกลางวงกลมแรก (บนซ้าย)"></div>
+                <div class="board-handle" id="boardHandleBR" title="ลากมุมนี้ไปตรงกลางวงกลมสุดท้าย (ล่างขวา)"></div>
+                <div class="board-grid-preview" id="boardGridPreview"></div>
+              </div>
+              <div class="board-controls">
+                <label>แถว (rows)
+                  <input type="number" id="boardRows" min="1" max="6" value="6">
+                </label>
+                <label>คอลัมน์ (cols)
+                  <input type="number" id="boardCols" min="1" max="40" value="10">
+                </label>
+                <button id="btn-board-read" class="utility-btn small">อ่านสีจากรูป</button>
+              </div>
+              <p class="quick-import-hint">ลากมุมกรอบ (จุดขาว) ให้จุดบนซ้ายอยู่กลางวงกลมแรกสุด และจุดล่างขวาอยู่กลางวงกลมตัวสุดท้ายของตาราง แล้วปรับจำนวนแถว/คอลัมน์ให้ตรงก่อนกด "อ่านสีจากรูป"</p>
+            </div>
+
+            <label class="quick-import-label" for="quickImportInput" style="margin-top:0.8rem;">ผลที่อ่านได้ (ตรวจทานก่อนนำเข้า — เรียงเก่า→ใหม่)</label>
             <div class="quick-import-row">
               <input type="text" id="quickImportInput" class="quick-import-input" placeholder="เช่น BBPPTB...">
               <button id="btn-quick-import" class="utility-btn small">นำเข้า</button>

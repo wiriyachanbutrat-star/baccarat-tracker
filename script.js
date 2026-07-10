@@ -84,6 +84,168 @@ document.getElementById('btn-quick-import').addEventListener('click', () => {
   updateUI();
 });
 
+// "อ่านจากรูป": upload a screenshot of a physical Big Road board, drag a
+// grid overlay to line up with the circles, and sample pixel colors under
+// each grid point instead of typing the sequence by hand. Result lands in
+// the quick-import text box for review/edit before actually importing —
+// color-sampling a photo is inherently guess-prone (lighting, glare, hollow
+// vs filled markers), so nothing gets pushed into rounds silently.
+(function setupBoardReader(){
+  const fileInput = document.getElementById('boardImageInput');
+  const reader = document.getElementById('boardReader');
+  const wrap = document.getElementById('boardCanvasWrap');
+  const canvas = document.getElementById('boardCanvas');
+  const ctx = canvas.getContext('2d');
+  const handleTL = document.getElementById('boardHandleTL');
+  const handleBR = document.getElementById('boardHandleBR');
+  const gridPreview = document.getElementById('boardGridPreview');
+  const rowsInput = document.getElementById('boardRows');
+  const colsInput = document.getElementById('boardCols');
+  const readBtn = document.getElementById('btn-board-read');
+
+  let handlePos = { tl: { x: 0.1, y: 0.1 }, br: { x: 0.9, y: 0.9 } }; // fraction of canvas size
+
+  function positionHandles(){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    handleTL.style.left = (handlePos.tl.x * w) + 'px';
+    handleTL.style.top = (handlePos.tl.y * h) + 'px';
+    handleBR.style.left = (handlePos.br.x * w) + 'px';
+    handleBR.style.top = (handlePos.br.y * h) + 'px';
+    drawGridPreview();
+  }
+
+  function gridPoints(){
+    const rows = Math.max(1, Number(rowsInput.value) || 1);
+    const cols = Math.max(1, Number(colsInput.value) || 1);
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    const x0 = handlePos.tl.x * w, y0 = handlePos.tl.y * h;
+    const x1 = handlePos.br.x * w, y1 = handlePos.br.y * h;
+    const points = [];
+    for (let c = 0; c < cols; c++){
+      const col = [];
+      for (let r = 0; r < rows; r++){
+        const px = cols > 1 ? x0 + (x1 - x0) * (c / (cols - 1)) : (x0 + x1) / 2;
+        const py = rows > 1 ? y0 + (y1 - y0) * (r / (rows - 1)) : (y0 + y1) / 2;
+        col.push({ x: px, y: py });
+      }
+      points.push(col);
+    }
+    return points;
+  }
+
+  function drawGridPreview(){
+    gridPreview.innerHTML = '';
+    const cellW = canvas.clientWidth / Math.max(1, Number(colsInput.value) || 1);
+    const cellH = canvas.clientHeight / Math.max(1, Number(rowsInput.value) || 1);
+    const radius = Math.max(3, Math.min(cellW, cellH) * 0.18);
+    gridPoints().forEach(col => col.forEach(pt => {
+      const dot = document.createElement('div');
+      dot.className = 'board-grid-dot';
+      dot.style.width = dot.style.height = (radius * 2) + 'px';
+      dot.style.left = (pt.x - radius) + 'px';
+      dot.style.top = (pt.y - radius) + 'px';
+      gridPreview.appendChild(dot);
+    }));
+  }
+
+  function makeDraggable(handle, key){
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      handle.setPointerCapture(e.pointerId);
+      const move = (ev) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.min(1, Math.max(0, (ev.clientX - rect.left) / rect.width));
+        const y = Math.min(1, Math.max(0, (ev.clientY - rect.top) / rect.height));
+        handlePos[key] = { x, y };
+        positionHandles();
+      };
+      const up = () => {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+      };
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+    });
+  }
+  makeDraggable(handleTL, 'tl');
+  makeDraggable(handleBR, 'br');
+  rowsInput.addEventListener('input', drawGridPreview);
+  colsInput.addEventListener('input', drawGridPreview);
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    const img = new Image();
+    img.onload = () => {
+      const maxW = 640;
+      const scale = Math.min(1, maxW / img.naturalWidth);
+      canvas.width = Math.round(img.naturalWidth * scale);
+      canvas.height = Math.round(img.naturalHeight * scale);
+      canvas.style.width = canvas.width + 'px';
+      canvas.style.height = canvas.height + 'px';
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      reader.hidden = false;
+      handlePos = { tl: { x: 0.08, y: 0.08 }, br: { x: 0.92, y: 0.92 } };
+      positionHandles();
+    };
+    img.src = URL.createObjectURL(file);
+  });
+
+  const REF_COLORS = {
+    P: [79, 134, 192],
+    B: [193, 85, 90],
+    T: [95, 174, 130],
+  };
+
+  function saturationOf([r, g, b]){
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    return max === 0 ? 0 : (max - min) / max;
+  }
+
+  function classifyPatch(cx, cy, patchRadius){
+    let best = null, bestSat = 0;
+    const step = Math.max(1, Math.round(patchRadius / 4));
+    for (let dx = -patchRadius; dx <= patchRadius; dx += step){
+      for (let dy = -patchRadius; dy <= patchRadius; dy += step){
+        const x = Math.round(cx + dx), y = Math.round(cy + dy);
+        if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) continue;
+        const [r, g, b] = ctx.getImageData(x, y, 1, 1).data;
+        const sat = saturationOf([r, g, b]);
+        if (sat > bestSat){ bestSat = sat; best = [r, g, b]; }
+      }
+    }
+    if (!best || bestSat < 0.18) return null; // too washed-out — treat as empty
+    let nearest = null, nearestDist = Infinity;
+    for (const [label, ref] of Object.entries(REF_COLORS)){
+      const dist = (best[0]-ref[0])**2 + (best[1]-ref[1])**2 + (best[2]-ref[2])**2;
+      if (dist < nearestDist){ nearestDist = dist; nearest = label; }
+    }
+    return nearestDist < 90*90*3 ? nearest : null;
+  }
+
+  readBtn.addEventListener('click', () => {
+    // Canvas display size equals its pixel buffer (set 1:1 on load), so CSS
+    // px handle positions map directly to canvas pixel coordinates.
+    const cellW = canvas.width / Math.max(1, Number(colsInput.value) || 1);
+    const cellH = canvas.height / Math.max(1, Number(rowsInput.value) || 1);
+    const patchRadius = Math.max(2, Math.min(cellW, cellH) * 0.35);
+
+    let out = '';
+    gridPoints().forEach(col => {
+      for (const pt of col){
+        const label = classifyPatch(pt.x, pt.y, patchRadius);
+        if (!label) break; // column reads top-to-bottom; stop at first empty cell
+        out += label;
+      }
+    });
+
+    quickImportInput.value = out;
+    quickImportHint.textContent = out
+      ? `อ่านได้ ${out.length} ตา — ตรวจทานก่อนกด "นำเข้า"`
+      : 'อ่านไม่พบวงกลมที่จำแนกสีได้ ลองขยับกรอบหรือปรับแถว/คอลัมน์ใหม่';
+  });
+})();
+
 // Keyboard shortcuts for fast entry while watching a live table: P/B/T add a
 // result, Z or Backspace undoes the last one. Ignored while typing in an
 // input (e.g. the base-bet field) so they don't hijack normal text entry.
