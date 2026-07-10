@@ -668,15 +668,25 @@ function renderTieLine(){
   }
 }
 
-function renderTableStatus(sim, baseBet){
+// Note: this only judges bankroll health (losses/hit-rate/drawdown so far),
+// a separate concern from evaluateRoomFit's pattern-readability read — the
+// two can legitimately disagree (money still fine, but patterns unclear).
+// The roomFitVerdict param exists purely so the "ok" copy here doesn't read
+// like a blanket "keep playing" when the room-fit box right below is telling
+// the user the opposite for a different reason.
+function renderTableStatus(sim, baseBet, roomFitVerdict){
   const health = evaluateTableHealth(sim, baseBet);
   const box = els.tableStatus;
 
   if (!health.shouldStop){
     box.className = 'table-status ok';
-    els.tableStatusTitle.textContent = health.decided === 0
-      ? 'ยังไม่มีข้อมูลพอประเมินห้องนี้'
-      : 'ห้องนี้ยังอยู่ในเกณฑ์ปกติ เล่นต่อได้';
+    if (health.decided === 0){
+      els.tableStatusTitle.textContent = 'ยังไม่มีข้อมูลพอประเมินห้องนี้';
+    } else if (roomFitVerdict === 'bad'){
+      els.tableStatusTitle.textContent = 'การเงินยังปกติ (ยังไม่ถึงเกณฑ์หยุด) แต่รูปแบบไพ่ยังไม่ชัด — ดูช่องประเมินห้องด้านล่างประกอบ';
+    } else {
+      els.tableStatusTitle.textContent = 'ห้องนี้ยังอยู่ในเกณฑ์ปกติ เล่นต่อได้';
+    }
     els.tableStatusReasons.innerHTML = '';
     return;
   }
@@ -691,8 +701,7 @@ function renderTableStatus(sim, baseBet){
   });
 }
 
-function renderRoomFit(){
-  const fit = evaluateRoomFit();
+function renderRoomFit(fit){
   const box = els.roomFit;
   els.roomFitGood.innerHTML = '';
   els.roomFitBad.innerHTML = '';
@@ -804,8 +813,9 @@ function updateUI(){
   renderGameFix(sim);
   renderTieLine();
   renderMoney(sim);
-  renderTableStatus(sim, baseBet);
-  renderRoomFit();
+  const fit = evaluateRoomFit();
+  renderTableStatus(sim, baseBet, fit.verdict);
+  renderRoomFit(fit);
 
   els.btnUndo.disabled = rounds.length === 0;
 
