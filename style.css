@@ -146,13 +146,13 @@ h1{
   box-shadow:var(--shadow);
 }
 
-/* Recommend card shows only the call + bet line now — the reasoning,
-   tie-gap note, game-fix alert, table/room-fit status, and room-checklist
-   stay in the DOM (script.js still updates them without erroring) but are
-   hidden from view per the "only the recommendation" request. */
+/* Recommend card shows only the call + bet line by default — the reasoning,
+   tie-gap note, table/room-fit status, and room-checklist stay in the DOM
+   (script.js still updates them without erroring) but are hidden from view.
+   #gameFix stays visible: it now surfaces the urgent re-analysis alert after
+   2 straight losing steps, which needs to be seen, not just logged. */
 #suggest-reason,
 #tieLine,
-#gameFix,
 .status-stack,
 .room-checklist-details{
   display:none !important;
@@ -247,6 +247,15 @@ h1{
   border-left-color:var(--gold);
   background:rgba(201,162,39,0.14);
 }
+.game-fix.urgent{
+  border-left-color:var(--bad);
+  background:rgba(168,67,74,0.14);
+  animation:urgent-pulse 1.4s ease-in-out infinite;
+}
+@keyframes urgent-pulse{
+  0%,100%{ box-shadow:0 0 0 rgba(168,67,74,0); }
+  50%{ box-shadow:0 0 0 4px rgba(168,67,74,0.18); }
+}
 
 .game-fix-title{
   margin:0 0 0.25rem;
@@ -256,6 +265,7 @@ h1{
 }
 .game-fix.loss .game-fix-title{color:var(--bad);}
 .game-fix.mismatch .game-fix-title{color:var(--gold-soft);}
+.game-fix.urgent .game-fix-title{color:var(--bad);}
 
 .game-fix-text{
   margin:0;

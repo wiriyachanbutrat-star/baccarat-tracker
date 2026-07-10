@@ -417,6 +417,21 @@ function evaluateGameFix(sim, freshSugg){
 
   if (last.outcome === 'carry'){
     const nextPick = freshSugg.pick;
+
+    // Lost 2 steps in a row (about to bet the final, highest-stake step) —
+    // treat this as urgent: re-read the pattern right now rather than
+    // waiting for the full 3-step cycle to lose before flagging it.
+    if (last.step >= 2){
+      const switched = nextPick && nextPick !== last.pick;
+      return {
+        severity: 'urgent',
+        title: `ผิดมาแล้ว 2 ไม้ติด (แทง ${lastSideName}) — รีบวิเคราะห์ใหม่ด่วน`,
+        text: nextPick
+          ? `ไม้สุดท้าย (x4) กำลังจะมาถึง ระบบอ่าน Big Road ปัจจุบันใหม่ทันที และ${switched ? `เปลี่ยนฝั่งเป็น ${nextPick === 'P' ? 'Player' : 'Banker'} (${freshSugg.confidence}) แล้ว เพราะรูปแบบเปลี่ยนไปจากเดิม` : `ยังคงชี้ไปทาง ${nextPick === 'P' ? 'Player' : 'Banker'} (${freshSugg.confidence}) เหมือนเดิม แต่ผิดมาแล้ว 2 ไม้ ให้ทบทวนก่อนลงไม้สุดท้าย`}`
+          : `ไม้สุดท้าย (x4) กำลังจะมาถึง แต่ตอนนี้อ่าน Big Road ใหม่แล้วไม่เข้ารูปแบบไหนชัดเจน (รอวิเคราะห์) — ควรพิจารณาหยุดไม้นี้แทนที่จะฝืนแทงต่อ`,
+      };
+    }
+
     return {
       severity: 'carry',
       title: `แพ้ไม้ ${last.step} เมื่อกี้ (แทง ${lastSideName})`,
