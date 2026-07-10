@@ -58,6 +58,37 @@
           </div>
         </div>
 
+        <section class="card">
+          <h2 class="section-title">บันทึกผล</h2>
+          <div class="controls">
+            <button id="btn-player" class="entry-btn player"><span class="dot"></span>Player</button>
+            <button id="btn-banker" class="entry-btn banker"><span class="dot"></span>Banker</button>
+            <button id="btn-tie" class="entry-btn tie"><span class="dot"></span>เสมอ</button>
+          </div>
+          <div class="utility-row">
+            <button id="btn-undo" class="utility-btn">ย้อนกลับ</button>
+            <button id="btn-clear" class="utility-btn">รีเซ็ตทั้งหมด</button>
+          </div>
+
+          <h2 class="section-title" style="margin-top:1.4rem;">เบดโรด (Bead Plate)</h2>
+          <div class="bead-road-wrap">
+            <div class="bead-grid" id="beadGrid"></div>
+          </div>
+
+          <h2 class="section-title" style="margin-top:1.4rem;">Big Road (ถนนใหญ่)</h2>
+          <div class="bead-road-wrap">
+            <div class="bigroad-grid" id="bigRoadGrid"></div>
+          </div>
+
+          <h2 class="section-title" style="margin-top:1.4rem;">Big Eye Boy (เค้าตาแดง/ตาน้ำเงินเล็ก)</h2>
+          <div class="beb-row">
+            <div class="beb-strip" id="bebStrip"></div>
+            <span class="beb-latest" id="bebLatest">รอข้อมูล</span>
+          </div>
+        </section>
+      </div>
+
+      <div class="col">
         <section class="card money-card">
           <div class="card-title-row">
             <h2 class="section-title" style="margin:0;flex:1;">ระบบทบเงิน (ทบ 3 ไม้)</h2>
@@ -90,37 +121,6 @@
           <h2 class="section-title" style="margin-top:1.2rem;">ประวัติการแทง</h2>
           <div class="money-log-wrap">
             <ol class="money-log" id="moneyLog"></ol>
-          </div>
-        </section>
-      </div>
-
-      <div class="col">
-        <section class="card">
-          <h2 class="section-title">บันทึกผล</h2>
-          <div class="controls">
-            <button id="btn-player" class="entry-btn player"><span class="dot"></span>Player</button>
-            <button id="btn-banker" class="entry-btn banker"><span class="dot"></span>Banker</button>
-            <button id="btn-tie" class="entry-btn tie"><span class="dot"></span>เสมอ</button>
-          </div>
-          <div class="utility-row">
-            <button id="btn-undo" class="utility-btn">ย้อนกลับ</button>
-            <button id="btn-clear" class="utility-btn">รีเซ็ตทั้งหมด</button>
-          </div>
-
-          <h2 class="section-title" style="margin-top:1.4rem;">เบดโรด (Bead Plate)</h2>
-          <div class="bead-road-wrap">
-            <div class="bead-grid" id="beadGrid"></div>
-          </div>
-
-          <h2 class="section-title" style="margin-top:1.4rem;">Big Road (ถนนใหญ่)</h2>
-          <div class="bead-road-wrap">
-            <div class="bigroad-grid" id="bigRoadGrid"></div>
-          </div>
-
-          <h2 class="section-title" style="margin-top:1.4rem;">Big Eye Boy (เค้าตาแดง/ตาน้ำเงินเล็ก)</h2>
-          <div class="beb-row">
-            <div class="beb-strip" id="bebStrip"></div>
-            <span class="beb-latest" id="bebLatest">รอข้อมูล</span>
           </div>
         </section>
 
