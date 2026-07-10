@@ -146,6 +146,18 @@ h1{
   box-shadow:var(--shadow);
 }
 
+/* Recommend card shows only the call + bet line now — the reasoning,
+   tie-gap note, game-fix alert, table/room-fit status, and room-checklist
+   stay in the DOM (script.js still updates them without erroring) but are
+   hidden from view per the "only the recommendation" request. */
+#suggest-reason,
+#tieLine,
+#gameFix,
+.status-stack,
+.room-checklist-details{
+  display:none !important;
+}
+
 .recommend .side-chip{
   flex-shrink:0;
   width:64px;
