@@ -49,6 +49,8 @@ const els = {
   gameFix: document.getElementById('gameFix'),
   gameFixTitle: document.getElementById('gameFixTitle'),
   gameFixText: document.getElementById('gameFixText'),
+  bebStrip: document.getElementById('bebStrip'),
+  bebLatest: document.getElementById('bebLatest'),
 }
 
 document.getElementById('btn-player').addEventListener('click', ()=>addResult('P'))
@@ -264,10 +266,35 @@ function detectNamedPattern(columns){
   return null;
 }
 
-// Only reads named Big Road patterns (Dragon, Ping-Pong, Three-Cut-One,
-// Two-Cut-One, Pair). If none match, there's no clear call — return no pick
-// rather than reaching for a weaker signal, so the UI can honestly show
-// "รอวิเคราะห์" instead of forcing an answer.
+// Big Eye Boy ("เค้าตาแดง/ตาน้ำเงินเล็ก") is a road *derived* from Big Road:
+// it doesn't look at P/B directly, but compares the shape of the current
+// Big Road column against the column one before it. Red = the columns match
+// (same length, or the gap between the last two column-lengths repeats) —
+// read as "the pattern repeats" (Banker signal on physical scoreboards).
+// Blue = they don't match — "the pattern breaks" (Player signal). Only
+// plots once there are enough columns to compare.
+function deriveBigEyeBoy(columns){
+  const points = [];
+  const k = 1;
+  for (let c = 0; c < columns.length; c++){
+    for (let r = 0; r < columns[c].length; r++){
+      if (r > 0){
+        if (c - k < 0) continue;
+        points.push({ c, r, color: columns[c - k].length > r ? 'red' : 'blue' });
+      } else {
+        if (c - k - 1 < 0) continue;
+        points.push({ c, r, color: columns[c - k].length === columns[c - k - 1].length ? 'red' : 'blue' });
+      }
+    }
+  }
+  return points;
+}
+
+// Only reads named Big Road patterns first (Dragon, Ping-Pong, Four/Three/
+// Two-Cut-One, Pair) since those are the clearest, most specific reads.
+// Once none of those match, falls back to Big Eye Boy's latest dot. If even
+// that has no data yet, it's honestly "ไม่มีเค้า" (no pattern) rather than a
+// forced guess.
 // Important: baccarat hands are independent draws — none of this actually
 // shifts the probability of the next hand. Real long-run accuracy sits at
 // the game's base rate (~45-50%), same as a coin flip weighted by house odds.
@@ -286,7 +313,18 @@ function getSuggestion(winners){
     return { pick: named.pick, confidence: named.label, reasonText: named.reasonText };
   }
 
-  return { pick: null, confidence: null, reasonText: 'รอวิเคราะห์ — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง, สองตัดหนึ่ง หรือคู่ที่ชัดเจน' };
+  const bebPoints = deriveBigEyeBoy(columns);
+  if (bebPoints.length > 0){
+    const latest = bebPoints[bebPoints.length - 1].color;
+    const pick = latest === 'red' ? 'B' : 'P';
+    return {
+      pick,
+      confidence: 'Big Eye Boy',
+      reasonText: `เค้าตาแดง/ตาน้ำเงินเล็กล่าสุดขึ้น${latest === 'red' ? 'แดง (รูปแบบซ้ำ)' : 'น้ำเงิน (รูปแบบเปลี่ยน)'} จึงมองไปทาง ${pick === 'B' ? 'Banker' : 'Player'}`,
+    };
+  }
+
+  return { pick: null, confidence: null, reasonText: 'ไม่มีเค้า (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง, สองตัดหนึ่ง, คู่ หรือ Big Eye Boy ที่ชัดเจน' };
 }
 
 // Replays the history: the first WARMUP_ROUNDS results are observation only
@@ -530,6 +568,28 @@ function renderBigRoad(){
   grid.parentElement.scrollLeft = grid.parentElement.scrollWidth;
 }
 
+function renderBigEyeBoy(){
+  const winners = rounds.map(x => x.winner);
+  const columns = buildBigRoadColumns(winners);
+  const points = deriveBigEyeBoy(columns);
+
+  els.bebStrip.innerHTML = '';
+  const shown = points.slice(-16);
+  if (shown.length === 0){
+    els.bebStrip.innerHTML = '<span class="beb-empty">ยังไม่มีข้อมูลพอ</span>';
+  } else {
+    shown.forEach(p => {
+      const dot = document.createElement('span');
+      dot.className = 'beb-dot ' + p.color;
+      els.bebStrip.appendChild(dot);
+    });
+  }
+
+  const latest = points.length ? points[points.length - 1].color : null;
+  els.bebLatest.className = 'beb-latest' + (latest ? ' ' + latest : '');
+  els.bebLatest.textContent = latest === 'red' ? 'แดง · Banker' : latest === 'blue' ? 'น้ำเงิน · Player' : 'รอข้อมูล';
+}
+
 function renderRecommendation(sim, baseBet){
   const chip = els.chipIcon;
   const call = els.suggestCall;
@@ -732,6 +792,7 @@ function updateUI(){
 
   renderBeadRoad();
   renderBigRoad();
+  renderBigEyeBoy();
 
   const baseBet = Math.max(1, Number(els.baseBet.value) || 20);
   const sim = simulateMoney(baseBet);
