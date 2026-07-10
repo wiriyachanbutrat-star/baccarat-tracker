@@ -372,6 +372,37 @@ function evaluateTableHealth(sim, baseBet){
   return { shouldStop: reasons.length > 0, reasons, decided, hitRatePct };
 }
 
+// Compares the currently-active named pattern against what's ACTUALLY been
+// coming out recently. A pattern read (e.g. "มังกร Banker") is only useful
+// while reality keeps agreeing with it; if the last several non-tie hands
+// are dominated by the opposite side, the pattern has likely already broken
+// even though the rule that detected it hasn't caught up yet. This fires
+// immediately — independent of win/loss — as soon as the mismatch appears,
+// rather than waiting for a loss to surface it.
+function evaluateStatMismatch(winners, sugg){
+  if (!sugg.pick) return null;
+  const nt = nonTieFor(winners);
+  const windowSize = Math.min(10, nt.length);
+  if (windowSize < 6) return null;
+
+  const recent = nt.slice(-windowSize);
+  const pCount = recent.filter(r => r === 'P').length;
+  const bCount = recent.filter(r => r === 'B').length;
+  const pPct = (pCount / windowSize) * 100;
+  const bPct = (bCount / windowSize) * 100;
+  const dominant = pPct > bPct ? 'P' : bPct > pPct ? 'B' : null;
+  const dominantPct = Math.max(pPct, bPct);
+
+  if (dominant && dominant !== sugg.pick && dominantPct >= 65){
+    return {
+      severity: 'mismatch',
+      title: 'สถิติจริงกับแพทเทิร์นไม่ตรงกัน — แก้เกมทันที',
+      text: `${windowSize} ตาหลังสุด ฝั่ง ${sideName(dominant)} ออกจริงถึง ${Math.round(dominantPct)}% แต่แพทเทิร์นที่จับได้ (${sugg.confidence}) ยังชี้ไปทาง ${sideName(sugg.pick)} — สัญญาณว่าเค้าที่อ่านอยู่อาจกำลังหักเปลี่ยนไปแล้ว ควรพิจารณาความเสี่ยงก่อนแทงไม้นี้ หรือรอให้แพทเทิร์นจับสอดคล้องกับสถิติจริงก่อน`,
+    };
+  }
+  return null;
+}
+
 // "แก้เกม" (game-fix) advisory: triggers right after a loss. Since
 // getSuggestion() re-reads the Big Road from scratch every round anyway,
 // there's no separate "broken strategy" to swap out — the honest fix here is
@@ -604,8 +635,11 @@ function renderGameFix(sim){
     return;
   }
 
-  const freshSugg = getSuggestion(rounds.map(x => x.winner));
-  const fix = evaluateGameFix(sim, freshSugg);
+  const winners = rounds.map(x => x.winner);
+  const freshSugg = getSuggestion(winners);
+
+  const mismatch = evaluateStatMismatch(winners, freshSugg);
+  const fix = mismatch || evaluateGameFix(sim, freshSugg);
 
   if (!fix){
     els.gameFix.hidden = true;
