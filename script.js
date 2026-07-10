@@ -195,8 +195,11 @@ const sideName = s => (s === 'B' ? 'Banker' : 'Player');
 // most recently COMPLETED columns both ran exactly L wins before switching,
 // that's a rhythm. While the current (rightmost) column is still shorter
 // than L, predict it keeps going to complete the unit; once it reaches L,
-// predict the rhythm cuts to the other side next.
-function detectCutRhythm(columns, L, label){
+// predict the rhythm cuts to the other side next. `strength` is a confidence
+// score (0-100) for how confirmed this read is — longer, stricter rhythms
+// score higher — NOT a claim about the actual win probability, which stays
+// at the game's fixed base rate regardless.
+function detectCutRhythm(columns, L, label, strength){
   if (columns.length < 3) return null;
   const last = columns[columns.length - 1];
   const prev2 = columns[columns.length - 2];
@@ -210,6 +213,7 @@ function detectCutRhythm(columns, L, label){
     return {
       pick: lastSide,
       label,
+      strength,
       reasonText: `จังหวะก่อนหน้าออกซ้ำ ${L} ตาแล้วสลับต่อเนื่อง (${label}) คาดว่าฝั่ง ${sideName(lastSide)} จะออกซ้ำอีกตาให้ครบชุด`,
     };
   }
@@ -218,6 +222,7 @@ function detectCutRhythm(columns, L, label){
     return {
       pick,
       label,
+      strength,
       reasonText: `ฝั่ง ${sideName(lastSide)} ออกครบ ${L} ตาตามจังหวะ${label}แล้ว คาดว่าจะตัดสลับไปฝั่ง ${sideName(pick)}`,
     };
   }
@@ -228,7 +233,10 @@ function detectCutRhythm(columns, L, label){
 // recommendation — the user asked to recommend a bet only when confident,
 // not on every round. So the weak, single-occurrence "คู่" (Pair) read has
 // been dropped entirely, and Dragon/Ping-Pong now require a longer confirmed
-// run before they count, checked strongest/most specific first.
+// run before they count, checked strongest/most specific first. Each match
+// carries a `strength` (0-100) confidence score reflecting how well-confirmed
+// the read is (e.g. a longer dragon scores higher) — this is the pattern's
+// own confidence in itself, not the game's real win probability.
 function detectNamedPattern(columns){
   if (columns.length === 0) return null;
   const last = columns[columns.length - 1];
@@ -236,9 +244,11 @@ function detectNamedPattern(columns){
   const lastSide = last[0];
 
   if (lastLen >= 4){
+    const strength = Math.min(90, 70 + (lastLen - 4) * 4);
     return {
       pick: lastSide,
       label: 'มังกร (Dragon)',
+      strength,
       reasonText: `${sideName(lastSide)} ออกติดต่อกัน ${lastLen} ตา (มังกร) — นักเล่นแพทเทิร์นมักแทงตามมังกรต่อจนกว่าจะหัก`,
     };
   }
@@ -248,17 +258,18 @@ function detectNamedPattern(columns){
     return {
       pick,
       label: 'ปิงปอง (Ping Pong)',
+      strength: 65,
       reasonText: `Banker/Player สลับกันไปมาต่อเนื่องอย่างน้อย 6 ตา (ปิงปอง) จึงมองว่าจะสลับต่อไปทางฝั่ง ${sideName(pick)}`,
     };
   }
 
-  const fourCut = detectCutRhythm(columns, 4, 'สี่ตัดหนึ่ง (Four-Cut-One)');
+  const fourCut = detectCutRhythm(columns, 4, 'สี่ตัดหนึ่ง (Four-Cut-One)', 68);
   if (fourCut) return fourCut;
 
-  const threeCut = detectCutRhythm(columns, 3, 'สามตัดหนึ่ง (Three-Cut-One)');
+  const threeCut = detectCutRhythm(columns, 3, 'สามตัดหนึ่ง (Three-Cut-One)', 66);
   if (threeCut) return threeCut;
 
-  const twoCut = detectCutRhythm(columns, 2, 'สองตัดหนึ่ง (Two-Cut-One)');
+  const twoCut = detectCutRhythm(columns, 2, 'สองตัดหนึ่ง (Two-Cut-One)', 63);
   if (twoCut) return twoCut;
 
   return null;
@@ -300,20 +311,20 @@ function deriveBigEyeBoy(columns){
 // the game's base rate (~45-50%), same as a coin flip weighted by house odds.
 function getSuggestion(winners){
   if (winners.length === 0){
-    return { pick: null, confidence: null, reasonText: 'ยังไม่มีข้อมูลให้วิเคราะห์' };
+    return { pick: null, confidence: null, strength: null, reasonText: 'ยังไม่มีข้อมูลให้วิเคราะห์' };
   }
   const nt = nonTieFor(winners);
   if (nt.length === 0){
-    return { pick: null, confidence: null, reasonText: 'มีแต่ผลเสมอในประวัติ ลองบันทึกผล Player หรือ Banker เพิ่มอีกสักตา' };
+    return { pick: null, confidence: null, strength: null, reasonText: 'มีแต่ผลเสมอในประวัติ ลองบันทึกผล Player หรือ Banker เพิ่มอีกสักตา' };
   }
 
   const columns = buildBigRoadColumns(winners);
   const named = detectNamedPattern(columns);
   if (named){
-    return { pick: named.pick, confidence: named.label, reasonText: named.reasonText };
+    return { pick: named.pick, confidence: named.label, strength: named.strength, reasonText: named.reasonText };
   }
 
-  return { pick: null, confidence: null, reasonText: 'ไม่มีเค้าที่มั่นใจพอ (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง หรือสองตัดหนึ่งที่ชัดเจนพอจะแนะนำ ระบบจะรอจนกว่าจะมั่นใจ' };
+  return { pick: null, confidence: null, strength: null, reasonText: 'ไม่มีเค้าที่มั่นใจพอ (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง หรือสองตัดหนึ่งที่ชัดเจนพอจะแนะนำ ระบบจะรอจนกว่าจะมั่นใจ' };
 }
 
 // Replays the history: the first WARMUP_ROUNDS results are observation only
@@ -628,32 +639,31 @@ function renderBigEyeBoy(){
 // Circumference of the gauge ring (r=26): 2 * PI * 26.
 const ACC_GAUGE_CIRCUMFERENCE = 163.36;
 
-// Draws the actual observed hit-rate from this session's simulated bets
-// (sim.wins / decided rounds) as a ring — real numbers from the recorded
-// history, not the game's fixed base odds. Hidden until at least one round
-// has been decided, since a 0/0 ring would just be noise.
-function renderAccuracyGauge(sim){
-  const decided = sim.wins + sim.losses;
-  if (decided === 0){
+// Draws the CURRENT suggestion's own confidence score (sugg.strength, 0-100)
+// as a ring — how well-confirmed the pattern that fired this round is (a
+// longer dragon or a twice-confirmed rhythm scores higher). This is not the
+// game's real win probability, which never moves off its fixed base rate —
+// it's just how strict a read this particular call is. Hidden whenever
+// there's no active pick to score.
+function renderConfidenceGauge(sugg){
+  if (!sugg.pick || sugg.strength == null){
     els.accGauge.hidden = true;
     return;
   }
 
-  const pct = (sim.wins / decided) * 100;
+  const pct = sugg.strength;
   els.accGauge.hidden = false;
-  els.accGauge.className = 'acc-gauge' + (pct >= 50 ? '' : pct >= 40 ? ' warn' : ' bad');
+  els.accGauge.className = 'acc-gauge' + (pct >= 70 ? '' : pct >= 60 ? ' warn' : ' bad');
   els.accGaugeArc.style.strokeDashoffset =
     String(ACC_GAUGE_CIRCUMFERENCE * (1 - pct / 100));
   els.accGaugePct.textContent = Math.round(pct) + '%';
-  els.accGaugeSub.textContent = `${sim.wins}/${decided} ตาที่ตัดสินแล้ว`;
+  els.accGaugeSub.textContent = `ความมั่นใจของ ${sugg.confidence}`;
 }
 
 function renderRecommendation(sim, baseBet){
   const chip = els.chipIcon;
   const call = els.suggestCall;
   const reason = els.suggestReason;
-
-  renderAccuracyGauge(sim);
 
   if (rounds.length < WARMUP_ROUNDS){
     const remaining = WARMUP_ROUNDS - rounds.length;
@@ -663,10 +673,12 @@ function renderRecommendation(sim, baseBet){
     reason.textContent = `บันทึกผลอีก ${remaining} ตาก่อน ระบบจะเริ่มแนะนำฝั่งที่ควรแทงและจำนวนเงิน`;
     els.nextBetAmount.textContent = '—';
     els.stepTag.textContent = `รออีก ${remaining} ตา`;
+    els.accGauge.hidden = true;
     return;
   }
 
   const sugg = getSuggestion(rounds.map(x => x.winner));
+  renderConfidenceGauge(sugg);
 
   if (!sugg.pick){
     chip.className = 'side-chip none';
