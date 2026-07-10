@@ -66,6 +66,24 @@ document.getElementById('btn-reset-stats').addEventListener('click', clearAll)
 document.getElementById('btn-reset-money').addEventListener('click', resetMoney)
 els.baseBet.addEventListener('input', updateUI)
 
+// "ช่องอ่านเฉพาะ": bulk-import a sequence read off a photo/scoreboard by hand
+// (e.g. "BBBPPPBTPB") instead of clicking one round at a time. Only B/P/T
+// letters count; anything else (spaces, dashes, stray digits from side-bet
+// markers) is silently skipped rather than guessed at.
+const quickImportInput = document.getElementById('quickImportInput');
+const quickImportHint = document.getElementById('quickImportHint');
+document.getElementById('btn-quick-import').addEventListener('click', () => {
+  const matches = quickImportInput.value.toUpperCase().match(/[BPT]/g);
+  if (!matches || matches.length === 0){
+    quickImportHint.textContent = 'ไม่พบตัวอักษร B/P/T ที่อ่านได้ ลองตรวจสอบข้อความอีกครั้ง';
+    return;
+  }
+  matches.forEach(r => rounds.push({ r, winner: r }));
+  quickImportHint.textContent = `นำเข้าแล้ว ${matches.length} ตา`;
+  quickImportInput.value = '';
+  updateUI();
+});
+
 // Keyboard shortcuts for fast entry while watching a live table: P/B/T add a
 // result, Z or Backspace undoes the last one. Ignored while typing in an
 // input (e.g. the base-bet field) so they don't hijack normal text entry.

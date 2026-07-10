@@ -397,6 +397,44 @@ h1{
 .entry-btn.banker:hover{box-shadow:0 6px 16px rgba(193,85,90,0.3);}
 .entry-btn.tie:hover{box-shadow:0 6px 16px rgba(95,174,130,0.3);}
 
+.quick-import{
+  margin-top:0.9rem;
+  padding-top:0.9rem;
+  border-top:1px dashed var(--felt-line);
+}
+
+.quick-import-label{
+  display:block;
+  font-size:0.74rem;
+  color:var(--muted);
+  margin-bottom:0.4rem;
+}
+
+.quick-import-row{
+  display:flex;
+  gap:0.5rem;
+}
+
+.quick-import-input{
+  flex:1;
+  min-width:0;
+  padding:0.55rem 0.7rem;
+  border-radius:8px;
+  border:1px solid var(--felt-line);
+  background:rgba(0,0,0,0.22);
+  color:var(--cream);
+  font-family:Georgia,serif;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+}
+.quick-import-input:focus{ outline:none; border-color:var(--gold); }
+
+.quick-import-hint{
+  margin:0.4rem 0 0;
+  font-size:0.72rem;
+  color:var(--muted);
+}
+
 .key-hint{
   margin:0.5rem 0 0;
   font-size:0.72rem;
