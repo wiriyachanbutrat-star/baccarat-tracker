@@ -66,14 +66,6 @@ h1{
   color:var(--cream);
 }
 
-.lead{
-  color:var(--muted);
-  font-size:0.92rem;
-  margin:0 0 0.6rem;
-  max-width:46ch;
-  margin-inline:auto;
-}
-
 .nav-row{
   display:flex;
   flex-wrap:wrap;
@@ -102,6 +94,30 @@ h1{
     grid-template-columns: 1fr 1fr;
     align-items:start;
   }
+}
+
+/* Mobile: bigger tap targets, tighter spacing, chip stacked above the
+   recommend text instead of squeezed beside it. */
+@media (max-width:819px){
+  body{ padding:1rem 0.75rem 1.5rem; }
+  .card{ padding:0.9rem 0.9rem; }
+  .recommend{
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    padding:1rem;
+    gap:0.7rem;
+  }
+  .recommend-text{ width:100%; }
+  .controls{ gap:0.5rem; }
+  .entry-btn{
+    padding:1rem 0.4rem;
+    font-size:1rem;
+    min-height:56px;
+  }
+  .utility-btn{ padding:0.7rem 0.4rem; font-size:0.85rem; }
+  .nav-link{ font-size:0.85rem; }
+  .recommend .side-chip{ width:56px; height:56px; }
 }
 
 .col{
