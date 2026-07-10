@@ -158,6 +158,15 @@ h1{
   display:none !important;
 }
 
+/* Bead Plate, Big Road, and the stats card stay in the DOM (script.js keeps
+   updating them without erroring) but are hidden from view per request —
+   not deleted, just tucked away. */
+#beadPlateBlock,
+#bigRoadBlock,
+#statsCard{
+  display:none !important;
+}
+
 .recommend .side-chip{
   flex-shrink:0;
   width:64px;
