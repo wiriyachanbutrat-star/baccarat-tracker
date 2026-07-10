@@ -17,7 +17,10 @@ const els = {
   playerPct: document.getElementById('player-pct'),
   bankerPct: document.getElementById('banker-pct'),
   suggestCall: document.getElementById('suggest-call'),
-  suggestPct: document.getElementById('suggestPct'),
+  accGauge: document.getElementById('accGauge'),
+  accGaugeArc: document.getElementById('accGaugeArc'),
+  accGaugePct: document.getElementById('accGaugePct'),
+  accGaugeSub: document.getElementById('accGaugeSub'),
   suggestReason: document.getElementById('suggest-reason'),
   chipIcon: document.getElementById('chipIcon'),
   rounds: document.getElementById('rounds'),
@@ -607,10 +610,35 @@ function renderBigEyeBoy(){
   els.bebLatest.textContent = latest === 'red' ? 'แดง · Banker' : latest === 'blue' ? 'น้ำเงิน · Player' : 'รอข้อมูล';
 }
 
+// Circumference of the gauge ring (r=26): 2 * PI * 26.
+const ACC_GAUGE_CIRCUMFERENCE = 163.36;
+
+// Draws the actual observed hit-rate from this session's simulated bets
+// (sim.wins / decided rounds) as a ring — real numbers from the recorded
+// history, not the game's fixed base odds. Hidden until at least one round
+// has been decided, since a 0/0 ring would just be noise.
+function renderAccuracyGauge(sim){
+  const decided = sim.wins + sim.losses;
+  if (decided === 0){
+    els.accGauge.hidden = true;
+    return;
+  }
+
+  const pct = (sim.wins / decided) * 100;
+  els.accGauge.hidden = false;
+  els.accGauge.className = 'acc-gauge' + (pct >= 50 ? '' : pct >= 40 ? ' warn' : ' bad');
+  els.accGaugeArc.style.strokeDashoffset =
+    String(ACC_GAUGE_CIRCUMFERENCE * (1 - pct / 100));
+  els.accGaugePct.textContent = Math.round(pct) + '%';
+  els.accGaugeSub.textContent = `${sim.wins}/${decided} ตาที่ตัดสินแล้ว`;
+}
+
 function renderRecommendation(sim, baseBet){
   const chip = els.chipIcon;
   const call = els.suggestCall;
   const reason = els.suggestReason;
+
+  renderAccuracyGauge(sim);
 
   if (rounds.length < WARMUP_ROUNDS){
     const remaining = WARMUP_ROUNDS - rounds.length;
@@ -620,7 +648,6 @@ function renderRecommendation(sim, baseBet){
     reason.textContent = `บันทึกผลอีก ${remaining} ตาก่อน ระบบจะเริ่มแนะนำฝั่งที่ควรแทงและจำนวนเงิน`;
     els.nextBetAmount.textContent = '—';
     els.stepTag.textContent = `รออีก ${remaining} ตา`;
-    els.suggestPct.hidden = true;
     return;
   }
 
@@ -633,7 +660,6 @@ function renderRecommendation(sim, baseBet){
     reason.textContent = sugg.reasonText;
     els.nextBetAmount.textContent = '—';
     els.stepTag.textContent = `ไม้ ${sim.step + 1}/${MULTIPLIERS.length}`;
-    els.suggestPct.hidden = true;
     return;
   }
 
@@ -641,12 +667,6 @@ function renderRecommendation(sim, baseBet){
   chip.textContent = sugg.pick;
   call.textContent = `แทง ${sugg.pick === 'P' ? 'Player' : 'Banker'} — ${sugg.confidence}`;
   reason.textContent = sugg.reasonText;
-
-  // Shows the game's fixed base rate for the picked side (not a claim that
-  // the pattern raises it) — Banker/Player odds never change hand to hand.
-  const basePct = sugg.pick === 'P' ? ODDS.P * 100 : ODDS.B * 100;
-  els.suggestPct.hidden = false;
-  els.suggestPct.textContent = `โอกาสพื้นฐาน ~${basePct.toFixed(2)}%`;
 
   const nextAmount = baseBet * MULTIPLIERS[sim.step];
   els.nextBetAmount.textContent = '฿' + formatMoney(nextAmount);

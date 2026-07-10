@@ -196,16 +196,48 @@ h1{
   display:none;
 }
 
-.recommend-text .pct-badge{
-  display:inline-block;
-  margin:0 0 0.3rem;
-  padding:0.15rem 0.55rem;
-  border-radius:999px;
-  font-size:0.75rem;
-  font-weight:600;
-  color:var(--gold-soft);
-  background:rgba(201,162,39,0.16);
-  border:1px solid var(--gold);
+.acc-gauge{
+  display:flex;
+  align-items:center;
+  gap:0.65rem;
+  margin:0.4rem 0 0.5rem;
+}
+
+.acc-gauge-ring{
+  flex-shrink:0;
+}
+
+.acc-gauge-track{
+  fill:none;
+  stroke:var(--felt-line);
+  stroke-width:6;
+}
+
+.acc-gauge-arc{
+  fill:none;
+  stroke:var(--good);
+  stroke-width:6;
+  stroke-linecap:round;
+  stroke-dasharray:163.36;
+  stroke-dashoffset:163.36;
+  transition:stroke-dashoffset 0.4s ease, stroke 0.4s ease;
+}
+.acc-gauge.warn .acc-gauge-arc{ stroke:var(--carry); }
+.acc-gauge.bad .acc-gauge-arc{ stroke:var(--bad); }
+
+.acc-gauge-text{
+  display:flex;
+  flex-direction:column;
+  line-height:1.2;
+}
+.acc-gauge-text strong{
+  font-family:Georgia,serif;
+  font-size:1.15rem;
+  color:var(--cream);
+}
+.acc-gauge-text span{
+  font-size:0.72rem;
+  color:var(--muted);
 }
 
 .recommend-text .bet-line{
