@@ -389,6 +389,13 @@ h1{
 .entry-btn.banker:hover{box-shadow:0 6px 16px rgba(193,85,90,0.3);}
 .entry-btn.tie:hover{box-shadow:0 6px 16px rgba(95,174,130,0.3);}
 
+.key-hint{
+  margin:0.5rem 0 0;
+  font-size:0.72rem;
+  color:var(--muted);
+  text-align:center;
+}
+
 .utility-row{
   display:flex;
   gap:0.6rem;

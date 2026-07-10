@@ -66,6 +66,21 @@ document.getElementById('btn-reset-stats').addEventListener('click', clearAll)
 document.getElementById('btn-reset-money').addEventListener('click', resetMoney)
 els.baseBet.addEventListener('input', updateUI)
 
+// Keyboard shortcuts for fast entry while watching a live table: P/B/T add a
+// result, Z or Backspace undoes the last one. Ignored while typing in an
+// input (e.g. the base-bet field) so they don't hijack normal text entry.
+document.addEventListener('keydown', (e) => {
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  const key = e.key.toLowerCase();
+  if (key === 'p'){ e.preventDefault(); addResult('P'); }
+  else if (key === 'b'){ e.preventDefault(); addResult('B'); }
+  else if (key === 't'){ e.preventDefault(); addResult('T'); }
+  else if (key === 'z' || key === 'backspace'){ e.preventDefault(); undo(); }
+});
+
 function addResult(r){
   rounds.push({r,winner:r});
   updateUI();
