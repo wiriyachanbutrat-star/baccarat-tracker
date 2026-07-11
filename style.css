@@ -546,6 +546,13 @@ h1{
 .beb-latest.red{border-color:var(--bad); color:var(--bad);}
 .beb-latest.blue{border-color:var(--player); color:var(--player-soft);}
 
+.odd-even-line{
+  margin:0;
+  font-size:0.78rem;
+  color:var(--muted);
+  line-height:1.5;
+}
+
 .stat-grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);

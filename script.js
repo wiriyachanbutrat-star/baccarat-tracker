@@ -60,6 +60,7 @@ const els = {
   gameFixText: document.getElementById('gameFixText'),
   bebStrip: document.getElementById('bebStrip'),
   bebLatest: document.getElementById('bebLatest'),
+  oddEvenLine: document.getElementById('oddEvenLine'),
 }
 
 document.getElementById('btn-player').addEventListener('click', ()=>addResult('P'))
@@ -236,9 +237,11 @@ function detectCutRhythm(columns, L, label, strength){
 
 // Checks strongest/most specific reads first (Dragon, Ping-Pong, the
 // confirmed cut-rhythms), each requiring a longer confirmed run before it
-// counts. detectOddEven() at the very end is an explicit exception to
-// "only recommend when confident" — added on request as a deliberately weak
-// last-resort read, always scored lowest on the confidence gauge. Each match
+// counts. detectOddEven() is deliberately NOT included here — it almost
+// always matches (a column's length is always even or odd), so wiring it in
+// made the system bet nearly every round instead of waiting for a real
+// pattern, which tested out to noticeably worse results (see git history).
+// It's kept as a display-only read (renderOddEven) instead. Each match here
 // carries a `strength` (0-100) confidence score reflecting how well-confirmed
 // the read is (e.g. a longer dragon scores higher) — this is the pattern's
 // own confidence in itself, not the game's real win probability.
@@ -277,7 +280,7 @@ function detectNamedPattern(columns){
   const twoCut = detectCutRhythm(columns, 2, 'สองตัดหนึ่ง (Two-Cut-One)', 63);
   if (twoCut) return twoCut;
 
-  return detectOddEven(columns);
+  return null;
 }
 
 // "คู่-คี่" (odd/even): weakest, last-resort read — looks at whether the
@@ -299,6 +302,7 @@ function detectOddEven(columns){
     return {
       pick: lastSide,
       label: 'คู่-คี่ (Odd-Even)',
+      parity: 'even',
       strength: Math.min(58, 52 + lastLen),
       reasonText: `คอลัมน์ปัจจุบันของฝั่ง ${sideName(lastSide)} ยาว ${lastLen} ตา (เลขคู่) จึงมองว่ายังไปต่อในฝั่งเดิม — เป็นการอ่านที่มั่นใจต่ำสุดในระบบนี้`,
     };
@@ -307,6 +311,7 @@ function detectOddEven(columns){
   return {
     pick,
     label: 'คู่-คี่ (Odd-Even)',
+    parity: 'odd',
     strength: 50,
     reasonText: `คอลัมน์ปัจจุบันของฝั่ง ${sideName(lastSide)} ยาว ${lastLen} ตา (เลขคี่) จึงมองว่าใกล้ถึงตาตัดสลับไปฝั่ง ${sideName(pick)} — เป็นการอ่านที่มั่นใจต่ำสุดในระบบนี้`,
   };
@@ -361,11 +366,7 @@ function getSuggestion(winners){
     return { pick: named.pick, confidence: named.label, strength: named.strength, reasonText: named.reasonText };
   }
 
-  // In practice detectOddEven() above always returns a pick once there's at
-  // least one non-tie hand, so this only triggers on the empty-columns edge
-  // case checked earlier — kept as an honest fallback rather than assuming
-  // it's unreachable.
-  return { pick: null, confidence: null, strength: null, reasonText: 'ไม่มีเค้าที่มั่นใจพอ (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง, สองตัดหนึ่ง หรือคู่-คี่ที่ชัดเจนพอจะแนะนำ ระบบจะรอจนกว่าจะมั่นใจ' };
+  return { pick: null, confidence: null, strength: null, reasonText: 'ไม่มีเค้าที่มั่นใจพอ (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง หรือสองตัดหนึ่งที่ชัดเจนพอจะแนะนำ ระบบจะรอจนกว่าจะมั่นใจ' };
 }
 
 // "วิเคราะห์สวนทาง" (fade/contrarian): if the last full 3-step cycle lost,
@@ -704,6 +705,18 @@ function renderBigEyeBoy(){
   els.bebLatest.textContent = latest === 'red' ? 'แดง · Banker' : latest === 'blue' ? 'น้ำเงิน · Player' : 'รอข้อมูล';
 }
 
+// Display-only — not used to trigger a bet (see the comment on
+// detectNamedPattern for why). Just shows what the odd/even read of the
+// current column would say, for reference alongside the other roads.
+function renderOddEven(){
+  const winners = rounds.map(x => x.winner);
+  const columns = buildBigRoadColumns(winners);
+  const read = detectOddEven(columns);
+  els.oddEvenLine.textContent = read
+    ? `${read.parity === 'even' ? 'คู่' : 'คี่'} → มองไปทาง ${sideName(read.pick)}: ${read.reasonText}`
+    : 'รอข้อมูล';
+}
+
 // Circumference of the gauge ring (r=26): 2 * PI * 26.
 const ACC_GAUGE_CIRCUMFERENCE = 163.36;
 
@@ -945,6 +958,7 @@ function updateUI(){
   renderBeadRoad();
   renderBigRoad();
   renderBigEyeBoy();
+  renderOddEven();
 
   const baseBet = Math.max(1, Number(els.baseBet.value) || 20);
   const sim = simulateMoney(baseBet);
