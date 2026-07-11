@@ -1,11 +1,9 @@
 const rounds = [];
 
-// ทบ 3 ไม้: x1 -> x1.5 -> x2 แล้วตัดจบกลับไม้ 1. Softened from the original
-// [1,2,4] (a full 3-step loss cost 7x baseBet) to [1,1.5,2] (4.5x) -- same
-// idea (bigger bet after a loss), but a losing cycle now costs about 36%
-// less, since a full 3-step loss is common enough (~10% of cycles from
-// testing) that its size matters more than the win-side upside.
-const MULTIPLIERS = [1, 1.5, 2];
+// ทบ 3 ไม้: x1 -> x2 -> x4 แล้วตัดจบกลับไม้ 1. Back to the original steeper
+// progression on request (was softened to [1,1.5,2] for a while — a full
+// 3-step loss costs 7x baseBet again instead of 4.5x).
+const MULTIPLIERS = [1, 2, 4];
 // Lowered from 6 to 4 on request, to start recommending sooner.
 const WARMUP_ROUNDS = 4;
 // Room-fit needs more data than the betting warmup: 6 rounds is enough to
