@@ -384,62 +384,15 @@ function getSuggestion(winners){
   return { pick: null, confidence: null, strength: null, reasonText: 'ไม่มีเค้าที่มั่นใจพอ (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง หรือสองตัดหนึ่งที่ชัดเจนพอจะแนะนำ ระบบจะรอจนกว่าจะมั่นใจ' };
 }
 
-// Whether the last WINDOW (6-10) non-tie hands are dominated (>=65%) by one
-// side, and which side. Shared by getFinalSuggestion's silent agree/oppose
-// check below.
-// Fixed at exactly the last 6 non-tie hands (was a flexible 6-10 window)
-// per request to tighten this to a short, fixed recent window.
-const RECENT_WINDOW = 6;
-
-function recentDominantSide(winners){
-  const nt = nonTieFor(winners);
-  if (nt.length < RECENT_WINDOW) return null;
-
-  const recent = nt.slice(-RECENT_WINDOW);
-  const pPct = (recent.filter(r => r === 'P').length / RECENT_WINDOW) * 100;
-  const bPct = (recent.filter(r => r === 'B').length / RECENT_WINDOW) * 100;
-  if (pPct === bPct) return null;
-  const side = pPct > bPct ? 'P' : 'B';
-  return { side, pct: Math.max(pPct, bPct) };
-}
-
-// Two silent checks decide the final pick, neither is surfaced in the UI —
-// the recommend card only ever shows one pick and one pattern label, not
-// which path produced it:
-//  1. Agreement check: if the actual recent trend (last 6-10 non-tie hands)
-//     runs opposite to what the named pattern says, use the opposite side
-//     instead of the pattern's own pick.
-//  2. Loss-streak check: if the last full 3-step cycle lost, flip again for
-//     the next cycle.
-// Two flips cancel out (back to the pattern's own pick); one flip inverts
-// it. Important: none of this changes the real win probability — Banker/
-// Player stay at their fixed base rates no matter which one gets picked —
-// it's just a different heuristic for choosing a side.
+// Plain pass-through to getSuggestion — kept as its own function (rather
+// than replacing every call site) since simulateMoney/renderRecommendation/
+// renderGameFix/evaluateRoomFit all call this name. Previously flipped the
+// pick against recent stats or a loss streak ("แทงสวนแพทเทิร์น"); removed
+// on request. `faded` stays in the return shape for compatibility but is
+// now always false.
 function getFinalSuggestion(winners, consecutiveLosses){
   const sugg = getSuggestion(winners);
-  if (!sugg.pick) return { ...sugg, faded: false };
-
-  let flips = 0;
-  const dominant = recentDominantSide(winners);
-  if (dominant && dominant.side !== sugg.pick && dominant.pct >= 65) flips++;
-  if (consecutiveLosses >= 1) flips++;
-
-  const finalPick = flips % 2 === 1 ? (sugg.pick === 'P' ? 'B' : 'P') : sugg.pick;
-  const faded = finalPick !== sugg.pick;
-
-  // Labeled explicitly now instead of staying silent: seeing "ปิงปอง" but a
-  // pick that runs opposite the pattern's own direction read as a bug
-  // otherwise. "(สวนแพทเทิร์น)" makes clear this bet goes against what the
-  // named pattern itself would call.
-  return {
-    pick: finalPick,
-    confidence: faded ? `${sugg.confidence} (สวนแพทเทิร์น)` : sugg.confidence,
-    strength: sugg.strength,
-    faded,
-    reasonText: faded
-      ? `แพทเทิร์น ${sugg.confidence} ชี้ไปทาง ${sideName(sugg.pick)} แต่จากสถิติล่าสุด/ผลแพ้ก่อนหน้า ระบบเลยแทงสวนแพทเทิร์นไปทาง ${sideName(finalPick)} แทน`
-      : sugg.reasonText,
-  };
+  return { ...sugg, faded: false };
 }
 
 // Replays the history: the first WARMUP_ROUNDS results are observation only
