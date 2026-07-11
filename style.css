@@ -242,6 +242,23 @@ h1{
 .side-chip.none{ --chip-base:#7d7864; --chip-face-light:#cfcabb; --chip-face-dark:#9c9683; }
 .side-chip.none .chip-label{ color:#3a3a34; }
 
+/* Letter color follows the standard P=blue / B=red convention rather than
+   the felt-dark default. Since the chip face itself is also blue/red, a
+   plain colored letter would wash out against it -- a white stroke (stacked
+   text-shadows in every direction) keeps it legible on top. */
+.side-chip.player .chip-label{
+  color:var(--player);
+  text-shadow:
+    -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff,
+    0 2px 3px rgba(0,0,0,0.35);
+}
+.side-chip.banker .chip-label{
+  color:var(--banker);
+  text-shadow:
+    -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff,
+    0 2px 3px rgba(0,0,0,0.35);
+}
+
 .recommend-text .label{
   text-transform:uppercase;
   letter-spacing:0.16em;
