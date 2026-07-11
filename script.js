@@ -383,14 +383,17 @@ function getSuggestion(winners){
 // Whether the last WINDOW (6-10) non-tie hands are dominated (>=65%) by one
 // side, and which side. Shared by getFinalSuggestion's silent agree/oppose
 // check below.
+// Fixed at exactly the last 6 non-tie hands (was a flexible 6-10 window)
+// per request to tighten this to a short, fixed recent window.
+const RECENT_WINDOW = 6;
+
 function recentDominantSide(winners){
   const nt = nonTieFor(winners);
-  const windowSize = Math.min(10, nt.length);
-  if (windowSize < 6) return null;
+  if (nt.length < RECENT_WINDOW) return null;
 
-  const recent = nt.slice(-windowSize);
-  const pPct = (recent.filter(r => r === 'P').length / windowSize) * 100;
-  const bPct = (recent.filter(r => r === 'B').length / windowSize) * 100;
+  const recent = nt.slice(-RECENT_WINDOW);
+  const pPct = (recent.filter(r => r === 'P').length / RECENT_WINDOW) * 100;
+  const bPct = (recent.filter(r => r === 'B').length / RECENT_WINDOW) * 100;
   if (pPct === bPct) return null;
   const side = pPct > bPct ? 'P' : 'B';
   return { side, pct: Math.max(pPct, bPct) };
