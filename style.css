@@ -499,6 +499,16 @@ h1{
 .utility-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
 .utility-btn:disabled{opacity:0.35; cursor:not-allowed;}
 
+.roads-row{
+  display:flex;
+  gap:1rem;
+  flex-wrap:wrap;
+}
+.roads-row > div{
+  flex:1 1 220px;
+  min-width:0;
+}
+
 .bead-road-wrap{
   overflow-x:auto;
   border:1px solid var(--felt-line);
