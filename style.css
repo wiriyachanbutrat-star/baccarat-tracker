@@ -147,14 +147,14 @@ h1{
 }
 
 /* Recommend card shows only the call + bet line by default — the reasoning,
-   tie-gap note, and room-checklist stay in the DOM (script.js still updates
+   tie-gap note, room-checklist, odd-even read, and room-evaluation
+   (table health + room-fit) all stay in the DOM (script.js still updates
    them without erroring) but are hidden from view. #gameFix stays visible:
-   it surfaces the urgent re-analysis alert after 2 straight losing steps.
-   .status-stack (table health + room-fit "stay or switch room") is now
-   shown too, on request — it's the "should I keep playing this room"
-   analysis. */
+   it surfaces the urgent re-analysis alert after 2 straight losing steps. */
 #suggest-reason,
 #tieLine,
+#oddEvenBlock,
+.status-stack,
 .room-checklist-details{
   display:none !important;
 }
