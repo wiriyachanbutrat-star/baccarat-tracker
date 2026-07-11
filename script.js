@@ -5,7 +5,11 @@ const rounds = [];
 // less, since a full 3-step loss is common enough (~10% of cycles from
 // testing) that its size matters more than the win-side upside.
 const MULTIPLIERS = [1, 1.5, 2];
-const WARMUP_ROUNDS = 6; // ต้องบันทึกผลอย่างน้อย 6 ตาก่อน ถึงจะเริ่มแนะนำ/แทงจริง
+// Lowered from 6 to 4 on request, to start recommending sooner. Left the
+// pattern-confidence thresholds (Dragon 4+, Ping-Pong 6+, etc.) untouched —
+// this only shortens the wait before the system starts looking, not how
+// strict a read has to be before it recommends a bet.
+const WARMUP_ROUNDS = 4;
 // Room-fit needs more data than the betting warmup: 6 rounds is enough to
 // start betting, but stats like tie% and pattern-readability% are still too
 // noisy at 6 to say "stay or switch rooms" honestly (e.g. one tie in 6
