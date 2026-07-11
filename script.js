@@ -431,7 +431,11 @@ function evaluateTableHealth(sim, baseBet){
 // immediately — independent of win/loss — as soon as the mismatch appears,
 // rather than waiting for a loss to surface it.
 function evaluateStatMismatch(winners, sugg){
-  if (!sugg.pick) return null;
+  // Skip when the current pick is already a fade: fading deliberately bets
+  // against the recent trend, so comparing it to recent stats would almost
+  // always "mismatch" and throw a contradictory alert right next to the
+  // fade's own reasoning.
+  if (!sugg.pick || sugg.faded) return null;
   const nt = nonTieFor(winners);
   const windowSize = Math.min(10, nt.length);
   if (windowSize < 6) return null;
@@ -511,7 +515,7 @@ function evaluateGameFix(sim, freshSugg){
 // and doesn't tie constantly is what pattern players look for on the
 // physical scoreboard before sitting down; this mirrors that read using the
 // session recorded so far.
-function evaluateRoomFit(){
+function evaluateRoomFit(consecutiveLosses){
   const winners = rounds.map(x => x.winner);
   const total = winners.length;
 
@@ -528,7 +532,9 @@ function evaluateRoomFit(){
   const ties = winners.filter(w => w === 'T').length;
   const tiePct = Math.round((ties / total) * 100);
 
-  const current = getSuggestion(winners);
+  // Same fade-aware pick as the recommend card, so this box never names a
+  // different side than what's actually being bet right now.
+  const current = getFinalSuggestion(winners, consecutiveLosses);
   const good = [];
   const bad = [];
 
@@ -905,7 +911,7 @@ function updateUI(){
   renderGameFix(sim);
   renderTieLine();
   renderMoney(sim);
-  const fit = evaluateRoomFit();
+  const fit = evaluateRoomFit(sim.consecutiveLosses);
   renderTableStatus(sim, baseBet, fit.verdict);
   renderRoomFit(fit);
 
