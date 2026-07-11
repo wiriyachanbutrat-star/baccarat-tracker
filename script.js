@@ -6,6 +6,12 @@ const rounds = [];
 // testing) that its size matters more than the win-side upside.
 const MULTIPLIERS = [1, 1.5, 2];
 const WARMUP_ROUNDS = 6; // ต้องบันทึกผลอย่างน้อย 6 ตาก่อน ถึงจะเริ่มแนะนำ/แทงจริง
+// Room-fit needs more data than the betting warmup: 6 rounds is enough to
+// start betting, but stats like tie% and pattern-readability% are still too
+// noisy at 6 to say "stay or switch rooms" honestly (e.g. one tie in 6
+// rounds reads as 16.7%, versus the true ~9.5% base rate). 20 rounds is
+// where those percentages stop swinging wildly round to round.
+const ROOM_FIT_MIN_ROUNDS = 20;
 
 // Standard 8-deck baccarat probabilities (widely published reference odds).
 // House edge per 1 unit staked, after Banker's 5% commission on wins.
@@ -562,8 +568,8 @@ function evaluateRoomFit(consecutiveLosses){
   const winners = rounds.map(x => x.winner);
   const total = winners.length;
 
-  if (total < WARMUP_ROUNDS){
-    return { verdict: 'pending', remaining: WARMUP_ROUNDS - total };
+  if (total < ROOM_FIT_MIN_ROUNDS){
+    return { verdict: 'pending', remaining: ROOM_FIT_MIN_ROUNDS - total };
   }
 
   let readable = 0;
