@@ -28,6 +28,7 @@ const els = {
   accGaugeSub: document.getElementById('accGaugeSub'),
   suggestReason: document.getElementById('suggest-reason'),
   chipIcon: document.getElementById('chipIcon'),
+  chipLabel: document.getElementById('chipLabel'),
   rounds: document.getElementById('rounds'),
   beadGrid: document.getElementById('beadGrid'),
   bigRoadGrid: document.getElementById('bigRoadGrid'),
@@ -743,13 +744,14 @@ function renderConfidenceGauge(sugg){
 
 function renderRecommendation(sim, baseBet){
   const chip = els.chipIcon;
+  const chipLabel = els.chipLabel;
   const call = els.suggestCall;
   const reason = els.suggestReason;
 
   if (rounds.length < WARMUP_ROUNDS){
     const remaining = WARMUP_ROUNDS - rounds.length;
     chip.className = 'side-chip none';
-    chip.textContent = String(rounds.length);
+    chipLabel.textContent = String(rounds.length);
     call.textContent = `กำลังเก็บข้อมูล (${rounds.length}/${WARMUP_ROUNDS} ตา)`;
     reason.textContent = `บันทึกผลอีก ${remaining} ตาก่อน ระบบจะเริ่มแนะนำฝั่งที่ควรแทงและจำนวนเงิน`;
     els.nextBetAmount.textContent = '—';
@@ -763,7 +765,7 @@ function renderRecommendation(sim, baseBet){
 
   if (!sugg.pick){
     chip.className = 'side-chip none';
-    chip.textContent = '?';
+    chipLabel.textContent = '?';
     call.textContent = 'รอวิเคราะห์';
     reason.textContent = sugg.reasonText;
     els.nextBetAmount.textContent = '—';
@@ -772,7 +774,7 @@ function renderRecommendation(sim, baseBet){
   }
 
   chip.className = 'side-chip ' + (sugg.pick === 'P' ? 'player' : 'banker');
-  chip.textContent = sugg.pick;
+  chipLabel.textContent = sugg.pick;
   call.textContent = `แทง ${sugg.pick === 'P' ? 'Player' : 'Banker'} — ${sugg.confidence}`;
   reason.textContent = sugg.reasonText;
 

@@ -166,47 +166,81 @@ h1{
   display:none !important;
 }
 
-/* Casino-chip look: outer ring of dashed edge marks (the classic poker-chip
-   rim), a thin gold trim, then a raised, radially-lit face on top where the
-   P/B/? text sits. Built as layered gradients + a ::before face disc so no
-   image assets are needed. */
+/* Casino-chip look, built in depth layers (deepest to shallowest):
+   1. the chip body itself: dashed rim + a curved-edge gradient so the rim
+      reads as a rounded-over lip, not a flat ring, plus a resting shadow
+      and a bottom rim-light for thickness.
+   2. ::before — the recessed gold trim groove between rim and face.
+   3. ::after — the face disc: radial-lit dome with an inner bevel ring.
+   4. .chip-shine — a glossy highlight arc (the "light hitting a sphere"
+      cue that sells the 3D read at a glance).
+   5. .chip-label — the P/B/? text, embossed with a light/dark text-shadow
+      pair so it reads as engraved rather than flat-printed.
+   No image assets; all layered gradients/shadows. */
 .recommend .side-chip{
   position:relative;
   flex-shrink:0;
-  width:64px;
-  height:64px;
+  width:68px;
+  height:68px;
   border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-family:Georgia,serif;
-  font-weight:700;
-  font-size:1.6rem;
-  color:var(--felt-900);
   background:
-    repeating-conic-gradient(rgba(255,255,255,0.92) 0deg 11deg, transparent 11deg 30deg),
-    var(--chip-base, #9c9683);
+    repeating-conic-gradient(rgba(255,255,255,0.95) 0deg 10deg, transparent 10deg 28deg),
+    radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--chip-base, #9c9683) 70%, white 30%), var(--chip-base, #9c9683) 60%, color-mix(in srgb, var(--chip-base, #9c9683) 75%, black 25%) 100%);
   box-shadow:
-    0 8px 16px rgba(0,0,0,0.45),
-    0 2px 0 rgba(0,0,0,0.3),
-    inset 0 0 0 2px rgba(0,0,0,0.2);
+    0 10px 18px rgba(0,0,0,0.5),
+    0 3px 0 rgba(0,0,0,0.35),
+    inset 0 -3px 5px rgba(0,0,0,0.4),
+    inset 0 3px 4px rgba(255,255,255,0.35);
 }
 
 .side-chip::before{
   content:'';
   position:absolute;
-  inset:9px;
+  inset:8px;
   border-radius:50%;
-  background:radial-gradient(circle at 35% 28%, var(--chip-face-light, #cfcabb), var(--chip-face-dark, #9c9683));
-  border:2px solid rgba(230,200,102,0.55);
+  background:transparent;
+  border:2.5px solid rgba(230,200,102,0.8);
   box-shadow:
-    inset 0 2px 4px rgba(255,255,255,0.5),
-    inset 0 -4px 7px rgba(0,0,0,0.35);
+    0 0 0 1px rgba(0,0,0,0.25),
+    inset 0 0 0 1px rgba(255,255,255,0.25);
+}
+
+.side-chip::after{
+  content:'';
+  position:absolute;
+  inset:12px;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 26%, var(--chip-face-light, #cfcabb), var(--chip-face-dark, #9c9683) 70%);
+  box-shadow:
+    inset 0 3px 5px rgba(255,255,255,0.55),
+    inset 0 -5px 8px rgba(0,0,0,0.4),
+    inset 0 0 0 1px rgba(0,0,0,0.15);
+}
+
+.side-chip .chip-shine{
+  position:absolute;
+  inset:12px;
+  border-radius:50%;
+  background:linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 28%, transparent 45%);
+  pointer-events:none;
+}
+
+.side-chip .chip-label{
+  position:relative;
+  font-family:Georgia,serif;
+  font-weight:700;
+  font-size:1.6rem;
+  color:var(--felt-900);
+  text-shadow:0 1px 0 rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.25);
 }
 
 .side-chip.player{ --chip-base:var(--banker); --chip-face-light:var(--player-soft); --chip-face-dark:var(--player); }
 .side-chip.banker{ --chip-base:var(--player); --chip-face-light:var(--banker-soft); --chip-face-dark:var(--banker); }
-.side-chip.none{ --chip-base:#7d7864; --chip-face-light:#cfcabb; --chip-face-dark:#9c9683; color:#3a3a34; }
+.side-chip.none{ --chip-base:#7d7864; --chip-face-light:#cfcabb; --chip-face-dark:#9c9683; }
+.side-chip.none .chip-label{ color:#3a3a34; }
 
 .recommend-text .label{
   text-transform:uppercase;
