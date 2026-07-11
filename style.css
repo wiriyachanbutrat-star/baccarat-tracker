@@ -361,10 +361,6 @@ h1{
   border-left-color:var(--bad);
   background:rgba(168,67,74,0.14);
 }
-.game-fix.mismatch{
-  border-left-color:var(--gold);
-  background:rgba(201,162,39,0.14);
-}
 .game-fix.urgent{
   border-left-color:var(--bad);
   background:rgba(168,67,74,0.14);
@@ -382,7 +378,6 @@ h1{
   color:var(--carry);
 }
 .game-fix.loss .game-fix-title{color:var(--bad);}
-.game-fix.mismatch .game-fix-title{color:var(--gold-soft);}
 .game-fix.urgent .game-fix-title{color:var(--bad);}
 
 .game-fix-text{

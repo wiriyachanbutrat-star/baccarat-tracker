@@ -380,24 +380,54 @@ function getSuggestion(winners){
   return { pick: null, confidence: null, strength: null, reasonText: 'ไม่มีเค้าที่มั่นใจพอ (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง หรือสองตัดหนึ่งที่ชัดเจนพอจะแนะนำ ระบบจะรอจนกว่าจะมั่นใจ' };
 }
 
-// "วิเคราะห์สวนทาง" (fade/contrarian): if the last full 3-step cycle lost,
-// flip the freshly-read pattern's pick for the NEXT cycle instead of
-// repeating it. Requested as "the technical opposite side" when the normal
-// read keeps losing. Important: flipping sides doesn't change the real win
-// probability at all — Banker/Player stay at their fixed base rates no
-// matter which one gets picked — so this is just a different heuristic to
-// choose a side, not a way to beat the math. Labeled honestly in the UI.
+// Whether the last WINDOW (6-10) non-tie hands are dominated (>=65%) by one
+// side, and which side. Shared by getFinalSuggestion's silent agree/oppose
+// check below.
+function recentDominantSide(winners){
+  const nt = nonTieFor(winners);
+  const windowSize = Math.min(10, nt.length);
+  if (windowSize < 6) return null;
+
+  const recent = nt.slice(-windowSize);
+  const pPct = (recent.filter(r => r === 'P').length / windowSize) * 100;
+  const bPct = (recent.filter(r => r === 'B').length / windowSize) * 100;
+  if (pPct === bPct) return null;
+  const side = pPct > bPct ? 'P' : 'B';
+  return { side, pct: Math.max(pPct, bPct) };
+}
+
+// Two silent checks decide the final pick, neither is surfaced in the UI —
+// the recommend card only ever shows one pick and one pattern label, not
+// which path produced it:
+//  1. Agreement check: if the actual recent trend (last 6-10 non-tie hands)
+//     runs opposite to what the named pattern says, use the opposite side
+//     instead of the pattern's own pick.
+//  2. Loss-streak check: if the last full 3-step cycle lost, flip again for
+//     the next cycle.
+// Two flips cancel out (back to the pattern's own pick); one flip inverts
+// it. Important: none of this changes the real win probability — Banker/
+// Player stay at their fixed base rates no matter which one gets picked —
+// it's just a different heuristic for choosing a side.
 function getFinalSuggestion(winners, consecutiveLosses){
   const sugg = getSuggestion(winners);
-  if (!sugg.pick || consecutiveLosses < 1) return { ...sugg, faded: false };
+  if (!sugg.pick) return { ...sugg, faded: false };
 
-  const faded = sugg.pick === 'P' ? 'B' : 'P';
+  let flips = 0;
+  const dominant = recentDominantSide(winners);
+  if (dominant && dominant.side !== sugg.pick && dominant.pct >= 65) flips++;
+  if (consecutiveLosses >= 1) flips++;
+
+  const finalPick = flips % 2 === 1 ? (sugg.pick === 'P' ? 'B' : 'P') : sugg.pick;
+  const faded = finalPick !== sugg.pick;
+
   return {
-    pick: faded,
-    confidence: `${sugg.confidence} (สวนทาง)`,
+    pick: finalPick,
+    confidence: sugg.confidence,
     strength: sugg.strength,
-    faded: true,
-    reasonText: `แนวทางเดิม (${sugg.confidence}) แพ้ครบ 3 ไม้มาแล้ว ${consecutiveLosses} รอบซ้อน ระบบเลยวิเคราะห์สวนทางแทน โดยกลับไปแทงฝั่งตรงข้าม (${faded === 'P' ? 'Player' : 'Banker'}) — การสวนทางไม่ได้ทำให้โอกาสชนะจริงเปลี่ยนไป ยังคงอยู่ที่ค่าพื้นฐานของเกมเหมือนเดิม`,
+    faded,
+    reasonText: faded
+      ? `จากการวิเคราะห์ Big Road และสถิติล่าสุดในภาพรวม ระบบประเมินว่าฝั่ง ${sideName(finalPick)} มีน้ำหนักมากกว่าในตานี้`
+      : sugg.reasonText,
   };
 }
 
@@ -474,41 +504,6 @@ function evaluateTableHealth(sim, baseBet){
   }
 
   return { shouldStop: reasons.length > 0, reasons, decided, hitRatePct };
-}
-
-// Compares the currently-active named pattern against what's ACTUALLY been
-// coming out recently. A pattern read (e.g. "มังกร Banker") is only useful
-// while reality keeps agreeing with it; if the last several non-tie hands
-// are dominated by the opposite side, the pattern has likely already broken
-// even though the rule that detected it hasn't caught up yet. This fires
-// immediately — independent of win/loss — as soon as the mismatch appears,
-// rather than waiting for a loss to surface it.
-function evaluateStatMismatch(winners, sugg){
-  // Skip when the current pick is already a fade: fading deliberately bets
-  // against the recent trend, so comparing it to recent stats would almost
-  // always "mismatch" and throw a contradictory alert right next to the
-  // fade's own reasoning.
-  if (!sugg.pick || sugg.faded) return null;
-  const nt = nonTieFor(winners);
-  const windowSize = Math.min(10, nt.length);
-  if (windowSize < 6) return null;
-
-  const recent = nt.slice(-windowSize);
-  const pCount = recent.filter(r => r === 'P').length;
-  const bCount = recent.filter(r => r === 'B').length;
-  const pPct = (pCount / windowSize) * 100;
-  const bPct = (bCount / windowSize) * 100;
-  const dominant = pPct > bPct ? 'P' : bPct > pPct ? 'B' : null;
-  const dominantPct = Math.max(pPct, bPct);
-
-  if (dominant && dominant !== sugg.pick && dominantPct >= 65){
-    return {
-      severity: 'mismatch',
-      title: 'สถิติจริงกับแพทเทิร์นไม่ตรงกัน — แก้เกมทันที',
-      text: `${windowSize} ตาหลังสุด ฝั่ง ${sideName(dominant)} ออกจริงถึง ${Math.round(dominantPct)}% แต่แพทเทิร์นที่จับได้ (${sugg.confidence}) ยังชี้ไปทาง ${sideName(sugg.pick)} — สัญญาณว่าเค้าที่อ่านอยู่อาจกำลังหักเปลี่ยนไปแล้ว ควรพิจารณาความเสี่ยงก่อนแทงไม้นี้ หรือรอให้แพทเทิร์นจับสอดคล้องกับสถิติจริงก่อน`,
-    };
-  }
-  return null;
 }
 
 // "แก้เกม" (game-fix) advisory: triggers right after a loss. Since
@@ -803,9 +798,7 @@ function renderGameFix(sim){
 
   const winners = rounds.map(x => x.winner);
   const freshSugg = getFinalSuggestion(winners, sim.consecutiveLosses);
-
-  const mismatch = evaluateStatMismatch(winners, freshSugg);
-  const fix = mismatch || evaluateGameFix(sim, freshSugg);
+  const fix = evaluateGameFix(sim, freshSugg);
 
   if (!fix){
     els.gameFix.hidden = true;
