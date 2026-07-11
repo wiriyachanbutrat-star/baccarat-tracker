@@ -429,13 +429,17 @@ function getFinalSuggestion(winners, consecutiveLosses){
   const finalPick = flips % 2 === 1 ? (sugg.pick === 'P' ? 'B' : 'P') : sugg.pick;
   const faded = finalPick !== sugg.pick;
 
+  // Labeled explicitly now instead of staying silent: seeing "ปิงปอง" but a
+  // pick that runs opposite the pattern's own direction read as a bug
+  // otherwise. "(สวนแพทเทิร์น)" makes clear this bet goes against what the
+  // named pattern itself would call.
   return {
     pick: finalPick,
-    confidence: sugg.confidence,
+    confidence: faded ? `${sugg.confidence} (สวนแพทเทิร์น)` : sugg.confidence,
     strength: sugg.strength,
     faded,
     reasonText: faded
-      ? `จากการวิเคราะห์ Big Road และสถิติล่าสุดในภาพรวม ระบบประเมินว่าฝั่ง ${sideName(finalPick)} มีน้ำหนักมากกว่าในตานี้`
+      ? `แพทเทิร์น ${sugg.confidence} ชี้ไปทาง ${sideName(sugg.pick)} แต่จากสถิติล่าสุด/ผลแพ้ก่อนหน้า ระบบเลยแทงสวนแพทเทิร์นไปทาง ${sideName(finalPick)} แทน`
       : sugg.reasonText,
   };
 }
