@@ -1,79 +1,5 @@
 const rounds = [];
 
-// Persists rounds + base bet to the browser's localStorage so a refresh or
-// closed tab doesn't wipe the session. Local only (this device/browser),
-// not a real backup — doesn't survive clearing browser data. Wrapped in
-// try/catch since localStorage can throw in private-browsing modes or when
-// the quota's full; failing silently just means "no persistence this time"
-// rather than breaking the page.
-const STORAGE_KEY = 'baccaratTrackerState';
-
-function saveState(){
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      winners: rounds.map(x => x.winner),
-      baseBet: els.baseBet.value,
-    }));
-  } catch (e){ /* storage unavailable — proceed without persistence */ }
-}
-
-function loadState(){
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    if (Array.isArray(data.winners)){
-      data.winners.forEach(w => {
-        if (w === 'P' || w === 'B' || w === 'T') rounds.push({ r: w, winner: w });
-      });
-    }
-    if (data.baseBet) els.baseBet.value = data.baseBet;
-  } catch (e){ /* corrupt/unreadable data — start fresh instead of crashing */ }
-}
-
-// Tracks each named pattern's ACTUAL win/loss record across every session
-// ever recorded on this browser (separate from the current rounds — not
-// cleared by "รีเซ็ตทั้งหมด", since the whole point is to learn each
-// pattern's real performance over many rooms/sessions, not just this one).
-// This is what lets "รูปแบบตรงกัน" actually feed back into future
-// recommendations: recordPatternOutcome() is called once per new round in
-// addResult(), and getFinalSuggestion() below reads it back to decide
-// whether a pattern that's historically lost more than it's won should be
-// faded going forward.
-const PATTERN_STATS_KEY = 'baccaratPatternStats';
-let patternStats = {};
-
-function loadPatternStats(){
-  try {
-    const raw = localStorage.getItem(PATTERN_STATS_KEY);
-    patternStats = raw ? JSON.parse(raw) : {};
-  } catch (e){ patternStats = {}; }
-}
-
-function savePatternStats(){
-  try { localStorage.setItem(PATTERN_STATS_KEY, JSON.stringify(patternStats)); }
-  catch (e){ /* storage unavailable — proceed without persistence */ }
-}
-
-function recordPatternOutcome(label, won){
-  if (!label) return;
-  if (!patternStats[label]) patternStats[label] = { wins: 0, losses: 0 };
-  patternStats[label][won ? 'wins' : 'losses']++;
-  savePatternStats();
-}
-
-// Only trusts the historical record once there's a real sample (8+ recorded
-// hands under that exact pattern label) — a handful of occurrences is just
-// noise, same reasoning as the room-fit 20-round minimum elsewhere.
-const PATTERN_STATS_MIN_SAMPLE = 8;
-
-function patternHistoricalWinRate(label){
-  const s = patternStats[label];
-  if (!s) return null;
-  const total = s.wins + s.losses;
-  if (total < PATTERN_STATS_MIN_SAMPLE) return null;
-  return { total, winRate: s.wins / total };
-}
 // ทบ 3 ไม้: x1 -> x1.5 -> x2 แล้วตัดจบกลับไม้ 1. Softened from the original
 // [1,2,4] (a full 3-step loss cost 7x baseBet) to [1,1.5,2] (4.5x) -- same
 // idea (bigger bet after a loss), but a losing cycle now costs about 36%
@@ -174,26 +100,10 @@ document.addEventListener('keydown', (e) => {
 });
 
 function addResult(r){
-  // Attribute this round's actual outcome to whichever named pattern would
-  // have called it (using the raw pattern read, not the fade-flipped final
-  // pick — the historical record belongs to the pattern itself, not to
-  // whichever silent flip happened to apply that round). Recorded once per
-  // new round, before it's added, so replays inside updateUI()/
-  // simulateMoney() never double-count it.
-  if (rounds.length >= WARMUP_ROUNDS && r !== 'T'){
-    const priorWinners = rounds.map(x => x.winner);
-    const sugg = getSuggestion(priorWinners);
-    if (sugg.pick) recordPatternOutcome(sugg.confidence, sugg.pick === r);
-  }
-
   rounds.push({r,winner:r});
   updateUI();
 }
 
-// Note: doesn't roll back the pattern-stats entry recorded for the popped
-// round (see addResult) — a rare mis-click undo leaves one stray tally in
-// a pattern's long-run record, which is negligible against the 8+ sample
-// size patternHistoricalWinRate() requires before trusting it.
 function undo(){
   rounds.pop();
   updateUI();
@@ -508,26 +418,14 @@ function getFinalSuggestion(winners, consecutiveLosses){
   if (dominant && dominant.side !== sugg.pick && dominant.pct >= 65) flips++;
   if (consecutiveLosses >= 1) flips++;
 
-  // Third check: this exact pattern's REAL recorded track record (across
-  // every session on this browser, once there's a large-enough sample) —
-  // if it's actually lost more than it's won historically, fade it too.
-  const hist = patternHistoricalWinRate(sugg.confidence);
-  if (hist && hist.winRate < 0.45) flips++;
-
   const finalPick = flips % 2 === 1 ? (sugg.pick === 'P' ? 'B' : 'P') : sugg.pick;
   const faded = finalPick !== sugg.pick;
-
-  // When there's a real track record for this pattern, show that instead of
-  // the fixed heuristic strength — actual recorded performance is more
-  // meaningful than a guessed constant.
-  const strength = hist ? Math.round(hist.winRate * 100) : sugg.strength;
 
   return {
     pick: finalPick,
     confidence: sugg.confidence,
-    strength,
+    strength: sugg.strength,
     faded,
-    historical: hist,
     reasonText: faded
       ? `จากการวิเคราะห์ Big Road และสถิติล่าสุดในภาพรวม ระบบประเมินว่าฝั่ง ${sideName(finalPick)} มีน้ำหนักมากกว่าในตานี้`
       : sugg.reasonText,
@@ -1089,11 +987,7 @@ function updateUI(){
     li.textContent = text;
     els.rounds.appendChild(li);
   });
-
-  saveState();
 }
 
-// initial — restore any saved session before the first render
-loadState();
-loadPatternStats();
+// initial
 updateUI();
