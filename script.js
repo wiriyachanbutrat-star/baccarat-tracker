@@ -1,4 +1,35 @@
 const rounds = [];
+
+// Persists rounds + base bet to the browser's localStorage so a refresh or
+// closed tab doesn't wipe the session. Local only (this device/browser),
+// not a real backup — doesn't survive clearing browser data. Wrapped in
+// try/catch since localStorage can throw in private-browsing modes or when
+// the quota's full; failing silently just means "no persistence this time"
+// rather than breaking the page.
+const STORAGE_KEY = 'baccaratTrackerState';
+
+function saveState(){
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      winners: rounds.map(x => x.winner),
+      baseBet: els.baseBet.value,
+    }));
+  } catch (e){ /* storage unavailable — proceed without persistence */ }
+}
+
+function loadState(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (Array.isArray(data.winners)){
+      data.winners.forEach(w => {
+        if (w === 'P' || w === 'B' || w === 'T') rounds.push({ r: w, winner: w });
+      });
+    }
+    if (data.baseBet) els.baseBet.value = data.baseBet;
+  } catch (e){ /* corrupt/unreadable data — start fresh instead of crashing */ }
+}
 // ทบ 3 ไม้: x1 -> x1.5 -> x2 แล้วตัดจบกลับไม้ 1. Softened from the original
 // [1,2,4] (a full 3-step loss cost 7x baseBet) to [1,1.5,2] (4.5x) -- same
 // idea (bigger bet after a loss), but a losing cycle now costs about 36%
@@ -986,7 +1017,10 @@ function updateUI(){
     li.textContent = text;
     els.rounds.appendChild(li);
   });
+
+  saveState();
 }
 
-// initial
+// initial — restore any saved session before the first render
+loadState();
 updateUI();
