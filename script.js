@@ -822,8 +822,8 @@ function renderOddEven(){
   const columns = buildBigRoadColumns(winners);
   const read = detectOddEven(columns);
   els.oddEvenLine.textContent = read
-    ? `${read.parity === 'even' ? 'คู่' : 'คี่'} → มองไปทาง ${sideName(read.pick)}: ${read.reasonText}`
-    : 'รอข้อมูล';
+    ? `คู่-คี่ (ข้อมูลประกอบ): ${read.parity === 'even' ? 'คู่' : 'คี่'} → มองไปทาง ${sideName(read.pick)}`
+    : 'คู่-คี่ (ข้อมูลประกอบ): รอข้อมูล';
 }
 
 // Circumference of the gauge ring (r=26): 2 * PI * 26.
