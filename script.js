@@ -214,12 +214,14 @@ const sideName = s => (s === 'B' ? 'Banker' : 'Player');
 // score (0-100) for how confirmed this read is — longer, stricter rhythms
 // score higher — NOT a claim about the actual win probability, which stays
 // at the game's fixed base rate regardless.
+// Relaxed on request from requiring 2 confirmed cycles (prev2 AND prev3
+// both length L) down to just 1 (prev2 only) — fires off fewer hands: L+1
+// instead of 2L+1.
 function detectCutRhythm(columns, L, label, strength){
-  if (columns.length < 3) return null;
+  if (columns.length < 2) return null;
   const last = columns[columns.length - 1];
   const prev2 = columns[columns.length - 2];
-  const prev3 = columns[columns.length - 3];
-  if (prev2.length !== L || prev3.length !== L) return null;
+  if (prev2.length !== L) return null;
 
   const lastLen = last.length;
   const lastSide = last[0];
@@ -260,10 +262,9 @@ function detectNamedPattern(columns){
   const lastLen = last.length;
   const lastSide = last[0];
 
-  // Lowered from 4+ to 3+ on request, so Dragon can fire off just the last
-  // 3 hands instead of waiting for a 4th.
-  if (lastLen >= 3){
-    const strength = Math.min(90, 66 + (lastLen - 3) * 4);
+  // Back to 4+ on request (was briefly lowered to 3+).
+  if (lastLen >= 4){
+    const strength = Math.min(90, 70 + (lastLen - 4) * 4);
     return {
       pick: lastSide,
       label: 'มังกร (Dragon)',
@@ -272,13 +273,14 @@ function detectNamedPattern(columns){
     };
   }
 
-  if (columns.length >= 6 && columns.slice(-6).every(c => c.length === 1)){
+  // Lowered from 6+ to 4+ alternating hands on request.
+  if (columns.length >= 4 && columns.slice(-4).every(c => c.length === 1)){
     const pick = lastSide === 'P' ? 'B' : 'P';
     return {
       pick,
       label: 'ปิงปอง (Ping Pong)',
       strength: 65,
-      reasonText: `Banker/Player สลับกันไปมาต่อเนื่องอย่างน้อย 6 ตา (ปิงปอง) จึงมองว่าจะสลับต่อไปทางฝั่ง ${sideName(pick)}`,
+      reasonText: `Banker/Player สลับกันไปมาต่อเนื่องอย่างน้อย 4 ตา (ปิงปอง) จึงมองว่าจะสลับต่อไปทางฝั่ง ${sideName(pick)}`,
     };
   }
 
