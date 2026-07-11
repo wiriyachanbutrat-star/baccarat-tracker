@@ -274,6 +274,9 @@ h1{
   font-weight:700;
 }
 
+.call-side.player{ color:var(--player-soft); }
+.call-side.banker{ color:var(--banker-soft); }
+
 .recommend-text .reason{
   display:none;
 }

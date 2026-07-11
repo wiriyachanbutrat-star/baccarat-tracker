@@ -775,7 +775,9 @@ function renderRecommendation(sim, baseBet){
 
   chip.className = 'side-chip ' + (sugg.pick === 'P' ? 'player' : 'banker');
   chipLabel.textContent = sugg.pick;
-  call.textContent = `แทง ${sugg.pick === 'P' ? 'Player' : 'Banker'} — ${sugg.confidence}`;
+  const sideClass = sugg.pick === 'P' ? 'player' : 'banker';
+  const sideLabel = sugg.pick === 'P' ? 'Player' : 'Banker';
+  call.innerHTML = `แทง <span class="call-side ${sideClass}">${sideLabel}</span> — ${sugg.confidence}`;
   reason.textContent = sugg.reasonText;
 
   const nextAmount = baseBet * MULTIPLIERS[sim.step];
