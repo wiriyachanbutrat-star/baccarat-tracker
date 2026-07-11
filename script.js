@@ -1,5 +1,10 @@
 const rounds = [];
-const MULTIPLIERS = [1, 2, 4]; // ทบ 3 ไม้: x1 -> x2 -> x4 แล้วตัดจบกลับไม้ 1
+// ทบ 3 ไม้: x1 -> x1.5 -> x2 แล้วตัดจบกลับไม้ 1. Softened from the original
+// [1,2,4] (a full 3-step loss cost 7x baseBet) to [1,1.5,2] (4.5x) -- same
+// idea (bigger bet after a loss), but a losing cycle now costs about 36%
+// less, since a full 3-step loss is common enough (~10% of cycles from
+// testing) that its size matters more than the win-side upside.
+const MULTIPLIERS = [1, 1.5, 2];
 const WARMUP_ROUNDS = 6; // ต้องบันทึกผลอย่างน้อย 6 ตาก่อน ถึงจะเริ่มแนะนำ/แทงจริง
 
 // Standard 8-deck baccarat probabilities (widely published reference odds).
