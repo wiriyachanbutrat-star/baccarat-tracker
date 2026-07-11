@@ -218,7 +218,11 @@ const sideName = s => (s === 'B' ? 'Banker' : 'Player');
 // both length L) down to just 1 (prev2 only) — fires off fewer hands: L+1
 // instead of 2L+1.
 function detectCutRhythm(columns, L, label, strength){
-  if (columns.length < 2) return null;
+  // Two-Cut-One (L=2) needs one extra column of lookback so it doesn't fire
+  // off just 3 hands — every pattern in this app now needs 4-5 hands
+  // minimum, on request.
+  const minColumns = L === 2 ? 3 : 2;
+  if (columns.length < minColumns) return null;
   const last = columns[columns.length - 1];
   const prev2 = columns[columns.length - 2];
   if (prev2.length !== L) return null;
