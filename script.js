@@ -6,10 +6,7 @@ const rounds = [];
 // less, since a full 3-step loss is common enough (~10% of cycles from
 // testing) that its size matters more than the win-side upside.
 const MULTIPLIERS = [1, 1.5, 2];
-// Lowered from 6 to 4 on request, to start recommending sooner. Left the
-// pattern-confidence thresholds (Dragon 4+, Ping-Pong 6+, etc.) untouched —
-// this only shortens the wait before the system starts looking, not how
-// strict a read has to be before it recommends a bet.
+// Lowered from 6 to 4 on request, to start recommending sooner.
 const WARMUP_ROUNDS = 4;
 // Room-fit needs more data than the betting warmup: 6 rounds is enough to
 // start betting, but stats like tie% and pattern-readability% are still too
@@ -263,8 +260,10 @@ function detectNamedPattern(columns){
   const lastLen = last.length;
   const lastSide = last[0];
 
-  if (lastLen >= 4){
-    const strength = Math.min(90, 70 + (lastLen - 4) * 4);
+  // Lowered from 4+ to 3+ on request, so Dragon can fire off just the last
+  // 3 hands instead of waiting for a 4th.
+  if (lastLen >= 3){
+    const strength = Math.min(90, 66 + (lastLen - 3) * 4);
     return {
       pick: lastSide,
       label: 'มังกร (Dragon)',
