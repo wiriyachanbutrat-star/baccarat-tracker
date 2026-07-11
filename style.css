@@ -166,7 +166,12 @@ h1{
   display:none !important;
 }
 
+/* Casino-chip look: outer ring of dashed edge marks (the classic poker-chip
+   rim), a thin gold trim, then a raised, radially-lit face on top where the
+   P/B/? text sits. Built as layered gradients + a ::before face disc so no
+   image assets are needed. */
 .recommend .side-chip{
+  position:relative;
   flex-shrink:0;
   width:64px;
   height:64px;
@@ -178,12 +183,30 @@ h1{
   font-weight:700;
   font-size:1.6rem;
   color:var(--felt-900);
-  box-shadow:inset 0 0 0 3px rgba(255,255,255,0.35), 0 6px 14px rgba(0,0,0,0.4);
+  background:
+    repeating-conic-gradient(rgba(255,255,255,0.92) 0deg 11deg, transparent 11deg 30deg),
+    var(--chip-base, #9c9683);
+  box-shadow:
+    0 8px 16px rgba(0,0,0,0.45),
+    0 2px 0 rgba(0,0,0,0.3),
+    inset 0 0 0 2px rgba(0,0,0,0.2);
 }
 
-.side-chip.player{background:radial-gradient(circle at 35% 30%, var(--player-soft), var(--player));}
-.side-chip.banker{background:radial-gradient(circle at 35% 30%, var(--banker-soft), var(--banker));}
-.side-chip.none{background:radial-gradient(circle at 35% 30%, #cfcabb, #9c9683); color:#3a3a34;}
+.side-chip::before{
+  content:'';
+  position:absolute;
+  inset:9px;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 28%, var(--chip-face-light, #cfcabb), var(--chip-face-dark, #9c9683));
+  border:2px solid rgba(230,200,102,0.55);
+  box-shadow:
+    inset 0 2px 4px rgba(255,255,255,0.5),
+    inset 0 -4px 7px rgba(0,0,0,0.35);
+}
+
+.side-chip.player{ --chip-base:var(--banker); --chip-face-light:var(--player-soft); --chip-face-dark:var(--player); }
+.side-chip.banker{ --chip-base:var(--player); --chip-face-light:var(--banker-soft); --chip-face-dark:var(--banker); }
+.side-chip.none{ --chip-base:#7d7864; --chip-face-light:#cfcabb; --chip-face-dark:#9c9683; color:#3a3a34; }
 
 .recommend-text .label{
   text-transform:uppercase;
