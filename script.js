@@ -234,11 +234,11 @@ function detectCutRhythm(columns, L, label, strength){
   return null; // streak ran past L, the rhythm already broke
 }
 
-// Only the strongest, clearest folk-pattern reads qualify as an actual
-// recommendation — the user asked to recommend a bet only when confident,
-// not on every round. So the weak, single-occurrence "คู่" (Pair) read has
-// been dropped entirely, and Dragon/Ping-Pong now require a longer confirmed
-// run before they count, checked strongest/most specific first. Each match
+// Checks strongest/most specific reads first (Dragon, Ping-Pong, the
+// confirmed cut-rhythms), each requiring a longer confirmed run before it
+// counts. detectOddEven() at the very end is an explicit exception to
+// "only recommend when confident" — added on request as a deliberately weak
+// last-resort read, always scored lowest on the confidence gauge. Each match
 // carries a `strength` (0-100) confidence score reflecting how well-confirmed
 // the read is (e.g. a longer dragon scores higher) — this is the pattern's
 // own confidence in itself, not the game's real win probability.
@@ -277,7 +277,39 @@ function detectNamedPattern(columns){
   const twoCut = detectCutRhythm(columns, 2, 'สองตัดหนึ่ง (Two-Cut-One)', 63);
   if (twoCut) return twoCut;
 
-  return null;
+  return detectOddEven(columns);
+}
+
+// "คู่-คี่" (odd/even): weakest, last-resort read — looks at whether the
+// CURRENT (still-open) column's length is even or odd. Even ("คู่") reads as
+// "the streak keeps going", odd ("คี่") reads as "due to switch". Checked
+// dead last, after every stronger named pattern has failed to match, and
+// scored low (50-58) on the confidence gauge since it's the least-confirmed
+// heuristic here — same disclaimer as every other pattern: this doesn't
+// change the real win probability, which never moves off the game's fixed
+// base rate no matter how this column's length parity falls.
+function detectOddEven(columns){
+  if (columns.length === 0) return null;
+  const last = columns[columns.length - 1];
+  const lastLen = last.length;
+  const lastSide = last[0];
+  const isEven = lastLen % 2 === 0;
+
+  if (isEven){
+    return {
+      pick: lastSide,
+      label: 'คู่-คี่ (Odd-Even)',
+      strength: Math.min(58, 52 + lastLen),
+      reasonText: `คอลัมน์ปัจจุบันของฝั่ง ${sideName(lastSide)} ยาว ${lastLen} ตา (เลขคู่) จึงมองว่ายังไปต่อในฝั่งเดิม — เป็นการอ่านที่มั่นใจต่ำสุดในระบบนี้`,
+    };
+  }
+  const pick = lastSide === 'P' ? 'B' : 'P';
+  return {
+    pick,
+    label: 'คู่-คี่ (Odd-Even)',
+    strength: 50,
+    reasonText: `คอลัมน์ปัจจุบันของฝั่ง ${sideName(lastSide)} ยาว ${lastLen} ตา (เลขคี่) จึงมองว่าใกล้ถึงตาตัดสลับไปฝั่ง ${sideName(pick)} — เป็นการอ่านที่มั่นใจต่ำสุดในระบบนี้`,
+  };
 }
 
 // Big Eye Boy ("เค้าตาแดง/ตาน้ำเงินเล็ก") is a road *derived* from Big Road:
@@ -329,7 +361,11 @@ function getSuggestion(winners){
     return { pick: named.pick, confidence: named.label, strength: named.strength, reasonText: named.reasonText };
   }
 
-  return { pick: null, confidence: null, strength: null, reasonText: 'ไม่มีเค้าที่มั่นใจพอ (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง หรือสองตัดหนึ่งที่ชัดเจนพอจะแนะนำ ระบบจะรอจนกว่าจะมั่นใจ' };
+  // In practice detectOddEven() above always returns a pick once there's at
+  // least one non-tie hand, so this only triggers on the empty-columns edge
+  // case checked earlier — kept as an honest fallback rather than assuming
+  // it's unreachable.
+  return { pick: null, confidence: null, strength: null, reasonText: 'ไม่มีเค้าที่มั่นใจพอ (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง, สองตัดหนึ่ง หรือคู่-คี่ที่ชัดเจนพอจะแนะนำ ระบบจะรอจนกว่าจะมั่นใจ' };
 }
 
 // "วิเคราะห์สวนทาง" (fade/contrarian): if the last full 3-step cycle lost,
