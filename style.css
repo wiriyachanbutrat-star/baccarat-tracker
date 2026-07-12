@@ -183,8 +183,8 @@ h1{
 .recommend .side-chip{
   position:relative;
   flex-shrink:0;
-  width:68px;
-  height:68px;
+  width:84px;
+  height:84px;
   border-radius:50%;
   display:flex;
   align-items:center;
@@ -253,7 +253,11 @@ h1{
   width:100%;
   height:100%;
   border-radius:50%;
-  object-fit:cover;
+  /* Source photos are portrait (1024x1536) with the coin roughly centered —
+     "cover" cropped off the crown/cards, leaving just a text sliver.
+     "contain" shows the whole coin instead; any gap at the sides shows the
+     chip's own colored gradient (--chip-base) peeking through, not black. */
+  object-fit:contain;
 }
 .side-chip.has-photo::before,
 .side-chip.has-photo::after,
