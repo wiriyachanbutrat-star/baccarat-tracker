@@ -398,14 +398,14 @@ class BaccaratPatternEngine {
 // fired). 'streak' bets the current run continues; 'cut' bets the next
 // group switches to the other side.
 const PATTERN_PICKS = {
-  BROKEN_DRAGON: { label: 'Broken Dragon', type: 'streak', strength: 66 },
-  LONG_DRAGON: { label: 'Long Dragon', type: 'streak', strength: 85 },
-  THREE_CUT: { label: '3-Cut', type: 'cut', strength: 63 },
-  TWO_CUT: { label: '2-Cut', type: 'cut', strength: 62 },
-  PING_PONG: { label: 'Ping Pong', type: 'cut', strength: 65 },
-  DOUBLE_DRAGON: { label: 'Double Dragon', type: 'streak', strength: 74 },
-  SHORT_DRAGON: { label: 'Short Dragon', type: 'streak', strength: 72 },
-  DRAGON: { label: 'Dragon', type: 'streak', strength: 70 },
+  BROKEN_DRAGON: { label: 'มังกรขาด (Broken Dragon)', type: 'streak', strength: 66 },
+  LONG_DRAGON: { label: 'มังกรยาว (Long Dragon)', type: 'streak', strength: 85 },
+  THREE_CUT: { label: 'สามตัด (3-Cut)', type: 'cut', strength: 63 },
+  TWO_CUT: { label: 'สองตัด (2-Cut)', type: 'cut', strength: 62 },
+  PING_PONG: { label: 'ปิงปอง (Ping Pong)', type: 'cut', strength: 65 },
+  DOUBLE_DRAGON: { label: 'มังกรคู่ (Double Dragon)', type: 'streak', strength: 74 },
+  SHORT_DRAGON: { label: 'มังกรสั้น (Short Dragon)', type: 'streak', strength: 72 },
+  DRAGON: { label: 'มังกร (Dragon)', type: 'streak', strength: 70 },
 };
 
 function pickForDetection(engine, result){
