@@ -239,8 +239,8 @@ h1{
   text-shadow:0 1px 0 rgba(255,255,255,0.4), 0 -1px 1px rgba(0,0,0,0.25);
 }
 
-.side-chip.player{ --chip-base:var(--banker); --chip-face-light:var(--player-soft); --chip-face-dark:var(--player); }
-.side-chip.banker{ --chip-base:var(--player); --chip-face-light:var(--banker-soft); --chip-face-dark:var(--banker); }
+.side-chip.player{ --chip-base:var(--player); --chip-face-light:var(--player-soft); --chip-face-dark:var(--player); }
+.side-chip.banker{ --chip-base:var(--banker); --chip-face-light:var(--banker-soft); --chip-face-dark:var(--banker); }
 .side-chip.none{ --chip-base:#7d7864; --chip-face-light:#cfcabb; --chip-face-dark:#9c9683; }
 .side-chip.none .chip-label{ color:#3a3a34; }
 
