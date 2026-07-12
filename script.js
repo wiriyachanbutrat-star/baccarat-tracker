@@ -273,23 +273,37 @@ function deriveBigEyeBoy(columns){
 // (~45-50%), same as a coin flip weighted by house odds, no matter what
 // eventually replaces this.
 //
-// New pattern engine (provided by the user) below: run-length-encodes the
-// non-tie results into groups, then flags 16 named shapes. detect() only
-// says which shapes match, not which side to bet — pickForDetection() right
-// after the class adds that layer, since the recommend card/betting logic
-// needs an actual P/B pick, a label, and a confidence score.
+// Pattern engine (provided by the user, "Production Version" — supersedes
+// the earlier 16-shape version): run-length-encodes the last `maxHistory`
+// raw results (ties included, then stripped) into groups, flags 8 named
+// shapes, and resolves them into one pattern via getPattern()'s own
+// priority order. detect() says WHICH shape won, not which side to bet —
+// PATTERN_PICKS right after adds that layer for the recommend card/betting
+// logic, following the same streak-continues vs cut-switches logic as
+// before.
 class BaccaratPatternEngine {
-  constructor(results = []) {
+  constructor(results = [], options = {}) {
+    this.maxHistory = options.maxHistory ?? 20;
+    this.dragonMin = options.dragonMin ?? 4;
+
     this.results = results
       .map(v => String(v).toUpperCase())
-      .filter(v => ['B', 'P'].includes(v));
+      .filter(v => ['B', 'P', 'T'].includes(v));
+
+    this.results = this.results.slice(-this.maxHistory);
+
+    this.playResults = this.removeTie(this.results);
 
     this.groups = this.buildGroups();
   }
 
+  removeTie(data) {
+    return data.filter(v => v !== 'T');
+  }
+
   buildGroups() {
     const groups = [];
-    for (const side of this.results) {
+    for (const side of this.playResults) {
       const last = groups[groups.length - 1];
       if (!last || last.side !== side) {
         groups.push({ side, count: 1 });
@@ -300,12 +314,12 @@ class BaccaratPatternEngine {
     return groups;
   }
 
-  getCounts() {
+  counts() {
     return this.groups.map(g => g.count);
   }
 
-  isDragon(min = 4) {
-    return this.groups.some(g => g.count >= min);
+  isDragon() {
+    return this.groups.some(g => g.count >= this.dragonMin);
   }
 
   isShortDragon() {
@@ -326,71 +340,43 @@ class BaccaratPatternEngine {
 
   isTwoCut() { return this.isNCut(2); }
   isThreeCut() { return this.isNCut(3); }
-  isFourCut() { return this.isNCut(4); }
-  isFiveCut() { return this.isNCut(5); }
 
-  isBrokenDragon(min = 4) {
+  isBrokenDragon() {
     const g = this.groups;
     for (let i = 1; i < g.length - 1; i++) {
-      if (g[i].count === 1 && g[i - 1].count >= min && g[i + 1].count >= min && g[i - 1].side === g[i + 1].side) {
+      if (g[i].count === 1 && g[i - 1].count >= this.dragonMin && g[i + 1].count >= this.dragonMin && g[i - 1].side === g[i + 1].side) {
         return true;
       }
     }
     return false;
   }
 
-  isMultiBrokenDragon(min = 4) {
-    let broken = 0;
-    const g = this.groups;
-    for (let i = 1; i < g.length - 1; i++) {
-      if (g[i].count === 1 && g[i - 1].count >= min && g[i + 1].count >= min && g[i - 1].side === g[i + 1].side) {
-        broken++;
-      }
-    }
-    return broken >= 2;
-  }
-
-  isDoubleDragon(min = 4) {
+  isDoubleDragon() {
     let streak = 0;
     for (const g of this.groups) {
-      streak = g.count >= min ? streak + 1 : 0;
+      streak = g.count >= this.dragonMin ? streak + 1 : 0;
       if (streak >= 2) return true;
     }
     return false;
   }
 
-  isAlternatingDragon(min = 3) {
-    return this.groups.length >= 4 && this.groups.every(g => g.count >= min);
-  }
-
-  isChoppyDragon() {
-    return this.groups.length >= 4 && this.groups.every(g => g.count >= 2 && g.count <= 3);
-  }
-
-  isStair() {
-    if (this.groups.length < 3) return false;
-    for (let i = 1; i < this.groups.length; i++) {
-      if (this.groups[i].count !== this.groups[i - 1].count + 1) return false;
-    }
-    return true;
-  }
-
-  isDoubleJump() {
-    const counts = this.getCounts();
-    return counts.length >= 4 && new Set(counts).size >= 3;
-  }
-
-  isMixed() {
-    return !(
-      this.isPingPong() || this.isTwoCut() || this.isThreeCut() || this.isFourCut() || this.isFiveCut() ||
-      this.isBrokenDragon() || this.isDoubleDragon() || this.isAlternatingDragon() || this.isChoppyDragon() ||
-      this.isStair() || this.isDragon()
-    );
+  getPattern() {
+    if (this.isBrokenDragon()) return 'BROKEN_DRAGON';
+    if (this.isLongDragon()) return 'LONG_DRAGON';
+    if (this.isThreeCut()) return 'THREE_CUT';
+    if (this.isTwoCut()) return 'TWO_CUT';
+    if (this.isPingPong()) return 'PING_PONG';
+    if (this.isDoubleDragon()) return 'DOUBLE_DRAGON';
+    if (this.isShortDragon()) return 'SHORT_DRAGON';
+    if (this.isDragon()) return 'DRAGON';
+    return 'MIXED';
   }
 
   detect() {
     return {
-      results: this.results,
+      maxHistory: this.maxHistory,
+      originalResults: this.results,
+      playResults: this.playResults,
       groups: this.groups,
       dragon: this.isDragon(),
       shortDragon: this.isShortDragon(),
@@ -398,65 +384,52 @@ class BaccaratPatternEngine {
       pingPong: this.isPingPong(),
       twoCut: this.isTwoCut(),
       threeCut: this.isThreeCut(),
-      fourCut: this.isFourCut(),
-      fiveCut: this.isFiveCut(),
       brokenDragon: this.isBrokenDragon(),
-      multiBrokenDragon: this.isMultiBrokenDragon(),
       doubleDragon: this.isDoubleDragon(),
-      alternatingDragon: this.isAlternatingDragon(),
-      choppyDragon: this.isChoppyDragon(),
-      stair: this.isStair(),
-      doubleJump: this.isDoubleJump(),
-      mixed: this.isMixed(),
+      pattern: this.getPattern(),
     };
   }
 }
 
-// Turns detect()'s yes/no flags into one actionable pick, checked strongest/
-// most specific first. Each pattern's "which side" rule follows the shape
-// it's named for: streak-shaped patterns (Dragon family, Broken/Double
-// Dragon) bet the streak continues; alternation-shaped patterns (Ping Pong,
-// Alternating/Choppy Dragon, Stair, N-Cut) bet the next group cuts to the
-// other side. `strength` (0-100) is this pattern's own confidence in
-// itself, same as before — not a claim about the real win probability,
-// which stays at the game's fixed base rate regardless of which named
-// shape fired.
+// Maps each of getPattern()'s 8 outcomes (MIXED excluded — no clear
+// direction) to a pick rule and a confidence score (0-100, this pattern's
+// own confidence in itself — not a claim about the real win probability,
+// which stays at the game's fixed base rate regardless of which pattern
+// fired). 'streak' bets the current run continues; 'cut' bets the next
+// group switches to the other side.
+const PATTERN_PICKS = {
+  BROKEN_DRAGON: { label: 'Broken Dragon', type: 'streak', strength: 66 },
+  LONG_DRAGON: { label: 'Long Dragon', type: 'streak', strength: 85 },
+  THREE_CUT: { label: '3-Cut', type: 'cut', strength: 63 },
+  TWO_CUT: { label: '2-Cut', type: 'cut', strength: 62 },
+  PING_PONG: { label: 'Ping Pong', type: 'cut', strength: 65 },
+  DOUBLE_DRAGON: { label: 'Double Dragon', type: 'streak', strength: 74 },
+  SHORT_DRAGON: { label: 'Short Dragon', type: 'streak', strength: 72 },
+  DRAGON: { label: 'Dragon', type: 'streak', strength: 70 },
+};
+
 function pickForDetection(engine, result){
-  const groups = engine.groups;
-  if (groups.length === 0) return null;
-  const last = groups[groups.length - 1];
+  const meta = PATTERN_PICKS[result.pattern];
+  if (!meta || engine.groups.length === 0) return null;
+
+  const last = engine.groups[engine.groups.length - 1];
   const lastSide = last.side;
   const opposite = lastSide === 'P' ? 'B' : 'P';
 
-  const streak = (label, strength) => ({
-    pick: lastSide,
-    label,
-    strength,
-    reasonText: `${sideName(lastSide)} ออกติดต่อกัน ${last.count} ตา (${label}) คาดว่าจะไปต่อฝั่งเดิม`,
-  });
-  const cut = (label, strength) => ({
+  if (meta.type === 'streak'){
+    return {
+      pick: lastSide,
+      label: meta.label,
+      strength: meta.strength,
+      reasonText: `${sideName(lastSide)} ออกติดต่อกัน ${last.count} ตา (${meta.label}) คาดว่าจะไปต่อฝั่งเดิม`,
+    };
+  }
+  return {
     pick: opposite,
-    label,
-    strength,
-    reasonText: `รูปแบบ ${label} คาดว่าจะสลับไปฝั่ง ${sideName(opposite)}`,
-  });
-
-  if (result.longDragon) return streak('Long Dragon', 85);
-  if (result.shortDragon) return streak('Short Dragon', 72);
-  if (result.doubleDragon) return streak('Double Dragon', 74);
-  if (result.multiBrokenDragon) return streak('Multi Broken Dragon', 68);
-  if (result.brokenDragon) return streak('Broken Dragon', 66);
-  if (result.alternatingDragon) return cut('Alternating Dragon', 70);
-  if (result.choppyDragon) return cut('Choppy Dragon', 64);
-  if (result.stair) return cut('Stair', 63);
-  if (result.pingPong) return cut('Ping Pong', 65);
-  if (result.fiveCut) return cut('5-Cut', 65);
-  if (result.fourCut) return cut('4-Cut', 64);
-  if (result.threeCut) return cut('3-Cut', 63);
-  if (result.twoCut) return cut('2-Cut', 62);
-  if (result.dragon) return streak('Dragon', 70);
-
-  return null; // doubleJump / mixed — too irregular for a directional read
+    label: meta.label,
+    strength: meta.strength,
+    reasonText: `รูปแบบ ${meta.label} คาดว่าจะสลับไปฝั่ง ${sideName(opposite)}`,
+  };
 }
 
 function getSuggestion(winners){
@@ -468,14 +441,14 @@ function getSuggestion(winners){
     return { pick: null, confidence: null, strength: null, reasonText: 'มีแต่ผลเสมอในประวัติ ลองบันทึกผล Player หรือ Banker เพิ่มอีกสักตา' };
   }
 
-  const engine = new BaccaratPatternEngine(nt);
+  const engine = new BaccaratPatternEngine(winners, { maxHistory: 20, dragonMin: 4 });
   const result = engine.detect();
   const found = pickForDetection(engine, result);
   if (found){
     return { pick: found.pick, confidence: found.label, strength: found.strength, reasonText: found.reasonText };
   }
 
-  return { pick: null, confidence: null, strength: null, reasonText: 'ไม่มีเค้าที่ชัดเจนพอ (Mixed/Double Jump) ระบบจะรอจนกว่าจะมั่นใจ' };
+  return { pick: null, confidence: null, strength: null, reasonText: 'ไม่มีเค้าที่ชัดเจนพอ (Mixed) ระบบจะรอจนกว่าจะมั่นใจ' };
 }
 
 // Plain pass-through to getSuggestion — kept as its own function (rather
