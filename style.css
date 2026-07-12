@@ -245,6 +245,24 @@ h1{
 .side-chip.none{ --chip-base:#7d7864; --chip-face-light:#cfcabb; --chip-face-dark:#9c9683; }
 .side-chip.none .chip-label{ color:#3a3a34; }
 
+/* Real chip photos (BB.png / PP.png) replace the CSS-drawn face/label/shine
+   when present — .has-photo is toggled in script.js alongside setting
+   #chipImg's src. */
+.chip-img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  object-fit:cover;
+}
+.side-chip.has-photo::before,
+.side-chip.has-photo::after,
+.side-chip.has-photo .chip-shine,
+.side-chip.has-photo .chip-label{
+  display:none;
+}
+
 /* Letter color follows the standard P=blue / B=red convention rather than
    the felt-dark default. Since the chip face itself is also blue/red, a
    plain colored letter would wash out against it -- a white stroke (stacked

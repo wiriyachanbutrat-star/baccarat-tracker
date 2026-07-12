@@ -35,6 +35,7 @@ const els = {
   suggestReason: document.getElementById('suggest-reason'),
   chipIcon: document.getElementById('chipIcon'),
   chipLabel: document.getElementById('chipLabel'),
+  chipImg: document.getElementById('chipImg'),
   rounds: document.getElementById('rounds'),
   beadGrid: document.getElementById('beadGrid'),
   bigRoadGrid: document.getElementById('bigRoadGrid'),
@@ -780,15 +781,22 @@ function renderConfidenceGauge(sugg){
   els.accGaugeSub.textContent = `ความมั่นใจของ ${sugg.confidence}`;
 }
 
+// Real chip photos (see index.html #chipImg) — shown instead of the
+// CSS-drawn face once a pick exists; the "none/waiting" state keeps the
+// plain CSS chip with a "?" since there's no neutral photo for it.
+const CHIP_IMAGES = { P: 'image/PP.png', B: 'image/BB.png' };
+
 function renderRecommendation(sim, baseBet){
   const chip = els.chipIcon;
   const chipLabel = els.chipLabel;
+  const chipImg = els.chipImg;
   const call = els.suggestCall;
   const reason = els.suggestReason;
 
   if (rounds.length < WARMUP_ROUNDS){
     const remaining = WARMUP_ROUNDS - rounds.length;
     chip.className = 'side-chip none';
+    chipImg.hidden = true;
     chipLabel.textContent = String(rounds.length);
     call.textContent = `กำลังเก็บข้อมูล (${rounds.length}/${WARMUP_ROUNDS} ตา)`;
     reason.textContent = `บันทึกผลอีก ${remaining} ตาก่อน ระบบจะเริ่มแนะนำฝั่งที่ควรแทงและจำนวนเงิน`;
@@ -803,6 +811,7 @@ function renderRecommendation(sim, baseBet){
 
   if (!sugg.pick){
     chip.className = 'side-chip none';
+    chipImg.hidden = true;
     chipLabel.textContent = '?';
     call.textContent = 'รอวิเคราะห์';
     reason.textContent = sugg.reasonText;
@@ -811,9 +820,12 @@ function renderRecommendation(sim, baseBet){
     return;
   }
 
-  chip.className = 'side-chip ' + (sugg.pick === 'P' ? 'player' : 'banker');
-  chipLabel.textContent = sugg.pick;
   const sideClass = sugg.pick === 'P' ? 'player' : 'banker';
+  chip.className = 'side-chip ' + sideClass + ' has-photo';
+  chipImg.src = CHIP_IMAGES[sugg.pick];
+  chipImg.alt = sugg.pick === 'P' ? 'Player' : 'Banker';
+  chipImg.hidden = false;
+  chipLabel.textContent = sugg.pick;
   const sideLabel = sugg.pick === 'P' ? 'Player' : 'Banker';
   call.innerHTML = `แทง <span class="call-side ${sideClass}">${sideLabel}</span> — ${sugg.confidence}`;
   reason.textContent = sugg.reasonText;
