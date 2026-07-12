@@ -190,7 +190,6 @@ h1{
   align-items:center;
   justify-content:center;
   background:
-    repeating-conic-gradient(rgba(255,255,255,0.95) 0deg 10deg, transparent 10deg 28deg),
     radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--chip-base, #9c9683) 70%, white 30%), var(--chip-base, #9c9683) 60%, color-mix(in srgb, var(--chip-base, #9c9683) 75%, black 25%) 100%);
   box-shadow:
     0 10px 18px rgba(0,0,0,0.5),
