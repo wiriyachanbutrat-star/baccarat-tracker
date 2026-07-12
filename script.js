@@ -204,99 +204,9 @@ function buildBigRoadCells(winners){
 
 const sideName = s => (s === 'B' ? 'Banker' : 'Player');
 
-// Generalizes "สองตัดหนึ่ง" (Two-Cut-One) to any repeat-length L: if the two
-// most recently COMPLETED columns both ran exactly L wins before switching,
-// that's a rhythm. While the current (rightmost) column is still shorter
-// than L, predict it keeps going to complete the unit; once it reaches L,
-// predict the rhythm cuts to the other side next. `strength` is a confidence
-// score (0-100) for how confirmed this read is — longer, stricter rhythms
-// score higher — NOT a claim about the actual win probability, which stays
-// at the game's fixed base rate regardless.
-// Relaxed on request from requiring 2 confirmed cycles (prev2 AND prev3
-// both length L) down to just 1 (prev2 only) — fires off fewer hands: L+1
-// instead of 2L+1.
-function detectCutRhythm(columns, L, label, strength){
-  // Two-Cut-One (L=2) needs one extra column of lookback so it doesn't fire
-  // off just 3 hands — every pattern in this app now needs 4-5 hands
-  // minimum, on request.
-  const minColumns = L === 2 ? 3 : 2;
-  if (columns.length < minColumns) return null;
-  const last = columns[columns.length - 1];
-  const prev2 = columns[columns.length - 2];
-  if (prev2.length !== L) return null;
-
-  const lastLen = last.length;
-  const lastSide = last[0];
-
-  if (lastLen < L){
-    return {
-      pick: lastSide,
-      label,
-      strength,
-      reasonText: `จังหวะก่อนหน้าออกซ้ำ ${L} ตาแล้วสลับต่อเนื่อง (${label}) คาดว่าฝั่ง ${sideName(lastSide)} จะออกซ้ำอีกตาให้ครบชุด`,
-    };
-  }
-  if (lastLen === L){
-    const pick = lastSide === 'P' ? 'B' : 'P';
-    return {
-      pick,
-      label,
-      strength,
-      reasonText: `ฝั่ง ${sideName(lastSide)} ออกครบ ${L} ตาตามจังหวะ${label}แล้ว คาดว่าจะตัดสลับไปฝั่ง ${sideName(pick)}`,
-    };
-  }
-  return null; // streak ran past L, the rhythm already broke
-}
-
-// Checks strongest/most specific reads first (Dragon, Ping-Pong, the
-// confirmed cut-rhythms), each requiring a longer confirmed run before it
-// counts. detectOddEven() is deliberately NOT included here — it almost
-// always matches (a column's length is always even or odd), so wiring it in
-// made the system bet nearly every round instead of waiting for a real
-// pattern, which tested out to noticeably worse results (see git history).
-// It's kept as a display-only read (renderOddEven) instead. Each match here
-// carries a `strength` (0-100) confidence score reflecting how well-confirmed
-// the read is (e.g. a longer dragon scores higher) — this is the pattern's
-// own confidence in itself, not the game's real win probability.
-function detectNamedPattern(columns){
-  if (columns.length === 0) return null;
-  const last = columns[columns.length - 1];
-  const lastLen = last.length;
-  const lastSide = last[0];
-
-  // Back to 4+ on request (was briefly lowered to 3+).
-  if (lastLen >= 4){
-    const strength = Math.min(90, 70 + (lastLen - 4) * 4);
-    return {
-      pick: lastSide,
-      label: 'มังกร (Dragon)',
-      strength,
-      reasonText: `${sideName(lastSide)} ออกติดต่อกัน ${lastLen} ตา (มังกร) — นักเล่นแพทเทิร์นมักแทงตามมังกรต่อจนกว่าจะหัก`,
-    };
-  }
-
-  // Lowered from 6+ to 4+ alternating hands on request.
-  if (columns.length >= 4 && columns.slice(-4).every(c => c.length === 1)){
-    const pick = lastSide === 'P' ? 'B' : 'P';
-    return {
-      pick,
-      label: 'ปิงปอง (Ping Pong)',
-      strength: 65,
-      reasonText: `Banker/Player สลับกันไปมาต่อเนื่องอย่างน้อย 4 ตา (ปิงปอง) จึงมองว่าจะสลับต่อไปทางฝั่ง ${sideName(pick)}`,
-    };
-  }
-
-  const fourCut = detectCutRhythm(columns, 4, 'สี่ตัดหนึ่ง (Four-Cut-One)', 68);
-  if (fourCut) return fourCut;
-
-  const threeCut = detectCutRhythm(columns, 3, 'สามตัดหนึ่ง (Three-Cut-One)', 66);
-  if (threeCut) return threeCut;
-
-  const twoCut = detectCutRhythm(columns, 2, 'สองตัดหนึ่ง (Two-Cut-One)', 63);
-  if (twoCut) return twoCut;
-
-  return null;
-}
+// All named-pattern detection (Dragon, Ping-Pong, Two/Three/Four-Cut-One)
+// removed on request, pending a new formula to replace them. getSuggestion()
+// below now always reports "no pattern" until that's written.
 
 // "คู่-คี่" (odd/even): weakest, last-resort read — looks at whether the
 // CURRENT (still-open) column's length is even or odd. Even ("คู่") reads as
@@ -356,16 +266,12 @@ function deriveBigEyeBoy(columns){
   return points;
 }
 
-// Only reads the strongest, clearest named Big Road patterns (Dragon,
-// Ping-Pong, Four/Three/Two-Cut-One). Big Eye Boy stays as a visual-only
-// strip (deriveBigEyeBoy/renderBigEyeBoy) — it's a weak derived signal and
-// is deliberately NOT used to trigger a bet recommendation. The user asked
-// for recommendations only when confident, not on every round, so anything
-// short of a strong named pattern honestly reports "ไม่มีเค้า" (no pattern)
-// rather than forcing a guess every round.
-// Important: baccarat hands are independent draws — none of this actually
-// shifts the probability of the next hand. Real long-run accuracy sits at
-// the game's base rate (~45-50%), same as a coin flip weighted by house odds.
+// All named-pattern detection was removed on request, pending a new formula
+// — this always reports "no pattern" for now, so nothing gets bet on.
+// Important: baccarat hands are independent draws — a new formula won't
+// change that. Real long-run accuracy sits at the game's base rate
+// (~45-50%), same as a coin flip weighted by house odds, no matter what
+// eventually replaces this.
 function getSuggestion(winners){
   if (winners.length === 0){
     return { pick: null, confidence: null, strength: null, reasonText: 'ยังไม่มีข้อมูลให้วิเคราะห์' };
@@ -375,13 +281,7 @@ function getSuggestion(winners){
     return { pick: null, confidence: null, strength: null, reasonText: 'มีแต่ผลเสมอในประวัติ ลองบันทึกผล Player หรือ Banker เพิ่มอีกสักตา' };
   }
 
-  const columns = buildBigRoadColumns(winners);
-  const named = detectNamedPattern(columns);
-  if (named){
-    return { pick: named.pick, confidence: named.label, strength: named.strength, reasonText: named.reasonText };
-  }
-
-  return { pick: null, confidence: null, strength: null, reasonText: 'ไม่มีเค้าที่มั่นใจพอ (No Pattern) — ยังไม่เข้ารูปแบบมังกร, ปิงปอง, สี่ตัดหนึ่ง, สามตัดหนึ่ง หรือสองตัดหนึ่งที่ชัดเจนพอจะแนะนำ ระบบจะรอจนกว่าจะมั่นใจ' };
+  return { pick: null, confidence: null, strength: null, reasonText: 'ยังไม่มีสูตรวิเคราะห์ในระบบตอนนี้ (รอสูตรใหม่)' };
 }
 
 // Plain pass-through to getSuggestion — kept as its own function (rather
@@ -675,9 +575,11 @@ function renderBigEyeBoy(){
   els.bebLatest.textContent = latest === 'red' ? 'แดง · Banker' : latest === 'blue' ? 'น้ำเงิน · Player' : 'รอข้อมูล';
 }
 
-// Display-only — not used to trigger a bet (see the comment on
-// detectNamedPattern for why). Just shows what the odd/even read of the
-// current column would say, for reference alongside the other roads.
+// Display-only — not used to trigger a bet (this heuristic fires almost
+// every column, so wiring it into getSuggestion made the system bet nearly
+// every round instead of waiting for a real pattern). Just shows what the
+// odd/even read of the current column would say, for reference alongside
+// the other roads.
 function renderOddEven(){
   const winners = rounds.map(x => x.winner);
   const columns = buildBigRoadColumns(winners);
