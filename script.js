@@ -320,24 +320,37 @@ class BaccaratPatternEngine {
     return this.groups.map(g => g.count);
   }
 
+  // Every check below reads only the TAIL of `groups` (the current/most
+  // recent shape), not "did this shape occur anywhere in the last
+  // maxHistory hands". The original .some()/.every() over the whole array
+  // let a stale streak from early in the window (e.g. a dragon that ended
+  // 10 hands ago) keep flagging isDragon()==true while the board had
+  // clearly moved on to alternating -- reported as "shows Ping-Pong on the
+  // road but the system said Dragon". Fixed to look at what's happening
+  // now.
   isDragon() {
-    return this.groups.some(g => g.count >= this.dragonMin);
+    const last = this.groups[this.groups.length - 1];
+    return !!last && last.count >= this.dragonMin;
   }
 
   isShortDragon() {
-    return this.groups.some(g => g.count >= 4 && g.count <= 6);
+    const last = this.groups[this.groups.length - 1];
+    return !!last && last.count >= 4 && last.count <= 6;
   }
 
   isLongDragon() {
-    return this.groups.some(g => g.count >= 7);
+    const last = this.groups[this.groups.length - 1];
+    return !!last && last.count >= 7;
   }
 
   isPingPong() {
-    return this.groups.length >= 4 && this.groups.every(g => g.count === 1);
+    if (this.groups.length < 4) return false;
+    return this.groups.slice(-4).every(g => g.count === 1);
   }
 
   isNCut(n) {
-    return this.groups.length >= 2 && this.groups.every(g => g.count === n);
+    if (this.groups.length < 2) return false;
+    return this.groups.slice(-2).every(g => g.count === n);
   }
 
   isTwoCut() { return this.isNCut(2); }
@@ -345,21 +358,15 @@ class BaccaratPatternEngine {
 
   isBrokenDragon() {
     const g = this.groups;
-    for (let i = 1; i < g.length - 1; i++) {
-      if (g[i].count === 1 && g[i - 1].count >= this.dragonMin && g[i + 1].count >= this.dragonMin && g[i - 1].side === g[i + 1].side) {
-        return true;
-      }
-    }
-    return false;
+    if (g.length < 3) return false;
+    const i = g.length - 2; // only the most recent break, not any past one
+    return g[i].count === 1 && g[i - 1].count >= this.dragonMin && g[i + 1].count >= this.dragonMin && g[i - 1].side === g[i + 1].side;
   }
 
   isDoubleDragon() {
-    let streak = 0;
-    for (const g of this.groups) {
-      streak = g.count >= this.dragonMin ? streak + 1 : 0;
-      if (streak >= 2) return true;
-    }
-    return false;
+    if (this.groups.length < 2) return false;
+    const [a, b] = this.groups.slice(-2);
+    return a.count >= this.dragonMin && b.count >= this.dragonMin;
   }
 
   getPattern() {
