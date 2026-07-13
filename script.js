@@ -778,7 +778,7 @@ function renderConfidenceGauge(sugg){
   els.accGaugeArc.style.strokeDashoffset =
     String(ACC_GAUGE_CIRCUMFERENCE * (1 - pct / 100));
   els.accGaugePct.textContent = Math.round(pct) + '%';
-  els.accGaugeSub.textContent = `ความมั่นใจของ ${sugg.confidence}`;
+  els.accGaugeSub.textContent = 'ความมั่นใจของคำแนะนำ';
 }
 
 // Real chip photos (see index.html #chipImg) — shown instead of the
@@ -827,7 +827,7 @@ function renderRecommendation(sim, baseBet){
   chipImg.hidden = false;
   chipLabel.textContent = sugg.pick;
   const sideLabel = sugg.pick === 'P' ? 'Player' : 'Banker';
-  call.innerHTML = `แทง <span class="call-side ${sideClass}">${sideLabel}</span> — ${sugg.confidence}`;
+  call.innerHTML = `แทง <span class="call-side ${sideClass}">${sideLabel}</span>`;
   reason.textContent = sugg.reasonText;
 
   const nextAmount = baseBet * MULTIPLIERS[sim.step];
