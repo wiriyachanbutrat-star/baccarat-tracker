@@ -84,13 +84,41 @@ h1{
 .nav-link:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
 
 .layout{
+  display:flex;
+  flex-direction:column;
+  gap:1rem;
+}
+
+/* Recommend card + record-result side by side on wide screens; stacked
+   (one per line) on narrow ones since each needs its own full width to
+   stay usable. */
+.top-row{
+  display:flex;
+  flex-direction:column;
+  gap:1rem;
+  align-items:stretch;
+}
+.top-row > .recommend,
+.top-row > .card{
+  flex:1 1 0;
+  min-width:0;
+}
+
+@media (min-width:820px){
+  .top-row{
+    flex-direction:row;
+    align-items:stretch;
+  }
+}
+
+.bottom-row{
   display:grid;
   grid-template-columns:minmax(0,1fr);
   gap:1rem;
 }
 
 @media (min-width:820px){
-  .layout{
+  .bottom-row{
     grid-template-columns: 1fr 1fr;
     align-items:start;
   }
@@ -118,13 +146,6 @@ h1{
   .utility-btn{ padding:0.7rem 0.4rem; font-size:0.85rem; }
   .nav-link{ font-size:0.85rem; }
   .recommend .side-chip{ width:56px; height:56px; }
-}
-
-.col{
-  display:flex;
-  flex-direction:column;
-  gap:1rem;
-  min-width:0;
 }
 
 .card{
