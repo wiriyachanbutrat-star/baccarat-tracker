@@ -32,6 +32,7 @@ const els = {
   accGaugeArc: document.getElementById('accGaugeArc'),
   accGaugePct: document.getElementById('accGaugePct'),
   accGaugeSub: document.getElementById('accGaugeSub'),
+  riskBadge: document.getElementById('riskBadge'),
   suggestReason: document.getElementById('suggest-reason'),
   chipIcon: document.getElementById('chipIcon'),
   chipLabel: document.getElementById('chipLabel'),
@@ -773,12 +774,21 @@ function renderConfidenceGauge(sugg){
   }
 
   const pct = sugg.strength;
+  const tier = pct >= 70 ? 'low' : pct >= 60 ? 'medium' : 'high';
   els.accGauge.hidden = false;
   els.accGauge.className = 'acc-gauge' + (pct >= 70 ? '' : pct >= 60 ? ' warn' : ' bad');
   els.accGaugeArc.style.strokeDashoffset =
     String(ACC_GAUGE_CIRCUMFERENCE * (1 - pct / 100));
   els.accGaugePct.textContent = Math.round(pct) + '%';
   els.accGaugeSub.textContent = 'ความมั่นใจของคำแนะนำ';
+
+  // Risk level, derived straight from the same strength score above (not a
+  // separate calculation) — low confidence in the pattern reads as high
+  // risk, and vice versa. Still just this pattern's own confidence in
+  // itself, not the game's real win probability.
+  const RISK_LABELS = { low: 'ต่ำ', medium: 'ปานกลาง', high: 'สูง' };
+  els.riskBadge.className = 'risk-badge ' + tier;
+  els.riskBadge.textContent = `ความเสี่ยง: ${RISK_LABELS[tier]}`;
 }
 
 // Real chip photos (see index.html #chipImg) — shown instead of the

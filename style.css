@@ -356,6 +356,15 @@ h1{
   color:var(--muted);
 }
 
+.risk-badge{
+  margin-top:0.2rem;
+  font-size:0.7rem;
+  font-weight:600;
+}
+.risk-badge.low{ color:var(--good); }
+.risk-badge.medium{ color:var(--carry); }
+.risk-badge.high{ color:var(--bad); }
+
 .recommend-text .bet-line{
   margin:0.55rem 0 0;
   font-size:0.86rem;
