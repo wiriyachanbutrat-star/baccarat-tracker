@@ -372,6 +372,19 @@ h1{
 }
 .hot-cold strong{color:var(--cream); font-family:Georgia,serif;}
 
+.warning-banner{
+  margin-top:1rem;
+  padding:0.75rem 1rem;
+  border:1px solid rgba(193,85,90,0.5);
+  border-radius:var(--panel-radius);
+  background:rgba(193,85,90,0.12);
+  color:var(--cream);
+  font-size:0.85rem;
+  line-height:1.5;
+  text-align:center;
+}
+.warning-banner strong{color:var(--bad);}
+
 .note{
   margin-top:1.4rem;
   font-size:0.76rem;
