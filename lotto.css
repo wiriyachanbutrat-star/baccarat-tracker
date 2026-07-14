@@ -1,14 +1,15 @@
 :root{
-  --felt-900:#0a2a20;
-  --felt-800:#0f3d2e;
-  --felt-700:#175943;
-  --felt-line:rgba(241,233,214,0.14);
+  /* Matches the "Midnight Royal" theme used on the main tracker page. */
+  --felt-900:#0a0b1f;
+  --felt-800:#161a3d;
+  --felt-700:#2e2a68;
+  --felt-line:rgba(230,225,255,0.14);
   --gold:#c9a227;
   --gold-soft:#e6c866;
   --cream:#f1ead9;
   --muted:rgba(241,234,217,0.58);
-  --good:#5aa06c;
-  --bad:#a8434a;
+  --good:#e3c15c;
+  --bad:#c1555a;
   --hot:#c98a3f;
   --cold:#4f86c0;
   --panel-radius:14px;

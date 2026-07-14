@@ -1,8 +1,12 @@
 :root{
-  --felt-900:#0a2a20;
-  --felt-800:#0f3d2e;
-  --felt-700:#175943;
-  --felt-line:rgba(241,233,214,0.14);
+  /* "Midnight Royal" theme: deep indigo/navy fading to royal purple near
+     the top, replacing the old felt-green look. Variable names kept as-is
+     (--felt-*) since they're referenced in 20+ places -- only the values
+     changed. */
+  --felt-900:#0a0b1f;
+  --felt-800:#161a3d;
+  --felt-700:#2e2a68;
+  --felt-line:rgba(230,225,255,0.14);
   --gold:#c9a227;
   --gold-soft:#e6c866;
   --cream:#f1ead9;
@@ -11,9 +15,9 @@
   --player-soft:#8ab4de;
   --banker:#c1555a;
   --banker-soft:#e08c8f;
-  --tie:#5fae82;
-  --good:#5aa06c;
-  --bad:#a8434a;
+  --tie:#4fb0c9;
+  --good:#e3c15c;
+  --bad:#c1555a;
   --push:#c9a227;
   --carry:#c98a3f;
   --panel-radius:14px;
