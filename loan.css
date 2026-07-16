@@ -1,25 +1,23 @@
 :root{
-  /* Matches the "Midnight Royal" theme used across the site. */
-  --felt-900:#0a0b1f;
-  --felt-800:#161a3d;
-  --felt-700:#2e2a68;
-  --felt-line:rgba(230,225,255,0.14);
-  --gold:#c9a227;
-  --gold-soft:#e6c866;
-  --cream:#f1ead9;
-  --muted:rgba(241,234,217,0.58);
-  --good:#e3c15c;
-  --bad:#c1555a;
-  /* Chart-only colors, run through the dataviz palette validator against
-     this theme's dark surface (all checks pass: lightness band, chroma
-     floor, CVD separation >=8, normal-vision floor >=15, contrast >=3:1).
-     --good above is too light (OKLch L 0.82) for a chart mark, so charts
-     use --chart-paid instead of --good. */
-  --chart-paid:#b8860b;
-  --chart-unpaid:#c1555a;
-  --chart-bar:#4f86c0;
+  /* "Champagne Ledger" — light theme for the loan tracker, gold accents kept. */
+  --felt-900:#efe6cf;
+  --felt-800:#f8f2e2;
+  --felt-700:#fffdf6;
+  --felt-line:rgba(90,70,20,0.14);
+  --gold:#a97c14;
+  --gold-soft:#8a6415;
+  --cream:#2b2415;
+  --muted:rgba(43,36,21,0.6);
+  --good:#7a6415;
+  --bad:#a8393f;
+  /* Chart-only colors, re-tuned for a light surface: darker so marks keep
+     enough contrast against cream/white (lightness band, chroma floor,
+     CVD separation, normal-vision floor, contrast >=3:1 all still hold). */
+  --chart-paid:#a97c14;
+  --chart-unpaid:#a8393f;
+  --chart-bar:#2f6fa8;
   --panel-radius:14px;
-  --shadow: 0 18px 40px rgba(0,0,0,0.35);
+  --shadow: 0 18px 40px rgba(120,90,20,0.16);
 }
 
 *{box-sizing:border-box;}
@@ -92,7 +90,7 @@ h1{
 }
 
 .card{
-  background:linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.01));
+  background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.55));
   border:1px solid var(--felt-line);
   border-radius:var(--panel-radius);
   padding:1.1rem 1.25rem;
@@ -143,7 +141,7 @@ h1{
   padding:0.5rem 0.8rem;
   border-radius:8px;
   border:1px solid var(--felt-line);
-  background:rgba(0,0,0,0.22);
+  background:rgba(90,70,20,0.05);
 }
 .rate-input-wrap input{
   width:5rem;
@@ -220,12 +218,12 @@ h1{
 .chart-tooltip{
   position:absolute;
   pointer-events:none;
-  background:var(--felt-900);
+  background:#2b2415;
   border:1px solid var(--gold);
   border-radius:8px;
   padding:0.45rem 0.65rem;
   font-size:0.76rem;
-  color:var(--cream);
+  color:var(--felt-700);
   box-shadow:var(--shadow);
   white-space:nowrap;
   z-index:10;
@@ -256,7 +254,7 @@ h1{
 .view-btn{
   appearance:none;
   border:1px solid var(--felt-line);
-  background:rgba(0,0,0,0.2);
+  background:rgba(90,70,20,0.05);
   color:var(--muted);
   padding:0.5rem 0.9rem;
   border-radius:8px;
@@ -266,7 +264,7 @@ h1{
 }
 .view-btn.active{
   border-color:var(--gold);
-  background:rgba(201,162,39,0.18);
+  background:rgba(169,124,20,0.16);
   color:var(--gold-soft);
   font-weight:600;
 }
@@ -283,7 +281,7 @@ h1{
   padding:0.5rem 0.6rem;
   border-radius:8px;
   border:1px solid var(--felt-line);
-  background:rgba(0,0,0,0.22);
+  background:rgba(90,70,20,0.05);
   color:var(--cream);
   font-size:0.85rem;
 }
@@ -300,10 +298,10 @@ h1{
   padding:0.55rem 0.6rem;
   border-radius:8px;
   border:1px solid var(--felt-line);
-  background:rgba(0,0,0,0.22);
+  background:rgba(90,70,20,0.05);
   color:var(--cream);
   font-size:0.85rem;
-  color-scheme:dark;
+  color-scheme:light;
 }
 .date-input:focus{ outline:none; border-color:var(--gold); }
 
@@ -315,7 +313,7 @@ h1{
   padding:0.6rem 0.8rem;
   border-radius:8px;
   border:1px solid var(--felt-line);
-  background:rgba(0,0,0,0.22);
+  background:rgba(90,70,20,0.05);
   color:var(--cream);
   font-size:0.95rem;
 }
@@ -329,7 +327,7 @@ h1{
   padding:0.6rem 0.8rem;
   border-radius:8px;
   border:1px solid var(--felt-line);
-  background:rgba(0,0,0,0.22);
+  background:rgba(90,70,20,0.05);
 }
 .bet-input-wrap span{ color:var(--gold-soft); font-weight:600; }
 .bet-input-wrap input{
@@ -347,7 +345,7 @@ h1{
   border:1px solid var(--gold);
   border-radius:10px;
   padding:0.65rem 1.4rem;
-  background:linear-gradient(135deg, rgba(201,162,39,0.28), rgba(201,162,39,0.08));
+  background:linear-gradient(135deg, rgba(169,124,20,0.24), rgba(169,124,20,0.08));
   color:var(--gold-soft);
   font-size:0.95rem;
   font-weight:700;
@@ -375,7 +373,7 @@ h1{
   cursor:pointer;
   transition:background 0.15s ease, color 0.15s ease;
 }
-.utility-btn:hover{ background:rgba(255,255,255,0.06); color:var(--cream); }
+.utility-btn:hover{ background:rgba(90,70,20,0.06); color:var(--cream); }
 .utility-btn:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 
 .summary-grid{
@@ -388,7 +386,7 @@ h1{
   text-align:center;
   padding:0.7rem 0.5rem;
   border-radius:10px;
-  background:rgba(0,0,0,0.2);
+  background:rgba(90,70,20,0.045);
   border:1px solid var(--felt-line);
 }
 .summary-tile .lbl{
@@ -421,7 +419,7 @@ h1{
 .loan-table thead th{
   text-align:left;
   padding:0.6rem 0.7rem;
-  background:rgba(201,162,39,0.14);
+  background:rgba(169,124,20,0.12);
   color:var(--gold-soft);
   font-weight:600;
   font-size:0.78rem;
@@ -436,7 +434,7 @@ h1{
 }
 
 .loan-table tbody tr:last-child td{ border-bottom:none; }
-.loan-table tbody tr:hover td{ background:rgba(255,255,255,0.03); }
+.loan-table tbody tr:hover td{ background:rgba(90,70,20,0.035); }
 
 .loan-table .amount{ text-align:right; font-variant-numeric:tabular-nums; }
 
@@ -450,17 +448,17 @@ h1{
   border:1px solid transparent;
 }
 .status-btn.pending{
-  background:rgba(193,85,90,0.16);
+  background:rgba(168,57,63,0.12);
   color:var(--bad);
   border-color:var(--bad);
 }
 .status-btn.paid{
-  background:rgba(227,193,94,0.18);
+  background:rgba(122,100,21,0.14);
   color:var(--good);
   border-color:var(--good);
 }
 .status-btn.cut-interest{
-  background:rgba(79,134,192,0.16);
+  background:rgba(47,111,168,0.12);
   color:var(--chart-bar);
   border-color:var(--chart-bar);
   margin-left:0.35rem;
