@@ -8,7 +8,7 @@
   --gold-soft:#8a6415;
   --cream:#2b2415;
   --muted:rgba(43,36,21,0.6);
-  --good:#7a6415;
+  --good:#2f7d4f;
   --bad:#a8393f;
   /* Chart-only colors, re-tuned for a light surface: darker so marks keep
      enough contrast against cream/white (lightness band, chroma floor,
@@ -453,7 +453,7 @@ h1{
   border-color:var(--bad);
 }
 .status-btn.paid{
-  background:rgba(122,100,21,0.14);
+  background:rgba(47,125,79,0.14);
   color:var(--good);
   border-color:var(--good);
 }
