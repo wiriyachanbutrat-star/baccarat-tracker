@@ -1,23 +1,40 @@
-const STORAGE_KEY = 'loanTrackerData';
+// Google Sheet (via Apps Script Web App) is the database now, replacing
+// localStorage. GAS web apps don't handle CORS preflight requests, so POST
+// bodies are sent as text/plain (not application/json) to avoid triggering
+// one -- the Apps Script side just JSON.parses the raw text regardless.
+const API_URL = 'https://script.google.com/macros/s/AKfycbz5cJ14OH-0qwkLPqDMbD7qwoKLxjZ6F2XIL5eCt9aau4KGc51P5z-XVdkM7bJUiI_j/exec';
 
 let state = {
   rate: 10,
   loans: [], // { id, name, principal, paid }
 };
 
-function loadState(){
+let saveTimer = null;
+
+async function loadState(){
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
+    const res = await fetch(API_URL);
+    const data = await res.json();
     if (typeof data.rate === 'number') state.rate = data.rate;
     if (Array.isArray(data.loans)) state.loans = data.loans;
-  } catch (e){ /* corrupt/unreadable data — start fresh instead of crashing */ }
+  } catch (e){
+    els.errorLine.textContent = 'โหลดข้อมูลจาก Google Sheet ไม่สำเร็จ (เช็คอินเทอร์เน็ต/URL) — ใช้ข้อมูลว่างไปก่อน';
+  }
 }
 
+// Debounced so typing in the rate box or renaming doesn't fire a request
+// per keystroke -- waits 500ms after the last change before writing.
 function saveState(){
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-  catch (e){ /* storage unavailable — proceed without persistence */ }
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(state),
+    }).catch(() => {
+      els.errorLine.textContent = 'บันทึกขึ้น Google Sheet ไม่สำเร็จ (เช็คอินเทอร์เน็ต) — ลองใหม่อีกครั้ง';
+    });
+  }, 500);
 }
 
 const els = {
@@ -147,7 +164,9 @@ els.borrowerName.addEventListener('keydown', (e) => { if (e.key === 'Enter') add
 els.btnClear.addEventListener('click', clearAll);
 els.rateInput.addEventListener('input', render);
 
-// initial
-loadState();
-els.rateInput.value = state.rate;
-render();
+// initial — show a loading state while the Sheet data comes in
+els.emptyRow.querySelector('td').textContent = 'กำลังโหลดข้อมูลจาก Google Sheet...';
+loadState().then(() => {
+  els.rateInput.value = state.rate;
+  render();
+});
