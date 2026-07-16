@@ -6,8 +6,21 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz5cJ14OH-0qwkLPqDMbD7q
 
 let state = {
   rate: 10,
-  loans: [], // { id, name, principal, paid }
+  loans: [], // { id, name, principal, paid, loanDate, dueDate, paidDate }
 };
+
+function todayISO(){
+  return new Date().toISOString().slice(0, 10);
+}
+
+// Displays as D/M/YYYY (Gregorian) — input/storage stays plain ISO
+// (YYYY-MM-DD) from <input type="date">, this is just for the table.
+function formatDate(iso){
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  if (!y || !m || !d) return '—';
+  return `${Number(d)}/${Number(m)}/${y}`;
+}
 
 let saveTimer = null;
 
@@ -41,6 +54,8 @@ const els = {
   rateInput: document.getElementById('rateInput'),
   borrowerName: document.getElementById('borrowerName'),
   borrowerAmount: document.getElementById('borrowerAmount'),
+  loanDate: document.getElementById('loanDate'),
+  dueDate: document.getElementById('dueDate'),
   btnAdd: document.getElementById('btn-add'),
   btnClear: document.getElementById('btn-clear'),
   errorLine: document.getElementById('errorLine'),
@@ -76,9 +91,14 @@ function addLoan(){
     name,
     principal: amount,
     paid: false,
+    loanDate: els.loanDate.value || todayISO(),
+    dueDate: els.dueDate.value || '',
+    paidDate: null,
   });
   els.borrowerName.value = '';
   els.borrowerAmount.value = '';
+  els.loanDate.value = todayISO();
+  els.dueDate.value = '';
   els.borrowerName.focus();
   saveState();
   render();
@@ -92,7 +112,10 @@ function deleteLoan(id){
 
 function toggleStatus(id){
   const loan = state.loans.find(l => l.id === id);
-  if (loan) loan.paid = !loan.paid;
+  if (loan){
+    loan.paid = !loan.paid;
+    loan.paidDate = loan.paid ? todayISO() : null;
+  }
   saveState();
   render();
 }
@@ -123,15 +146,19 @@ function render(){
     state.loans.forEach((loan, idx) => {
       const interest = loan.principal * (rate / 100);
       const total = loan.principal + interest;
+      const isOverdue = !loan.paid && loan.dueDate && loan.dueDate < todayISO();
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${idx + 1}</td>
         <td><input type="text" class="borrower-name-input" value="${loan.name.replace(/"/g, '&quot;')}"></td>
+        <td>${formatDate(loan.loanDate)}</td>
+        <td class="${isOverdue ? 'overdue' : ''}">${formatDate(loan.dueDate)}${isOverdue ? ' ⚠' : ''}</td>
         <td class="amount">${formatMoney(loan.principal)}</td>
         <td class="amount">${formatMoney(interest)}</td>
         <td class="amount"><strong>${formatMoney(total)}</strong></td>
         <td><button class="status-btn ${loan.paid ? 'paid' : 'pending'}">${loan.paid ? 'ชำระแล้ว' : 'รอชำระ'}</button></td>
+        <td>${formatDate(loan.paidDate)}</td>
         <td><button class="row-delete" title="ลบรายการนี้">✕</button></td>
       `;
 
@@ -166,6 +193,7 @@ els.rateInput.addEventListener('input', render);
 
 // initial — show a loading state while the Sheet data comes in
 els.emptyRow.querySelector('td').textContent = 'กำลังโหลดข้อมูลจาก Google Sheet...';
+els.loanDate.value = todayISO();
 loadState().then(() => {
   els.rateInput.value = state.rate;
   render();

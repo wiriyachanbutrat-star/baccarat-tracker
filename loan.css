@@ -157,6 +157,26 @@ h1{
   align-items:center;
 }
 
+.date-field{
+  display:flex;
+  flex-direction:column;
+  gap:0.25rem;
+  font-size:0.72rem;
+  color:var(--muted);
+}
+.date-input{
+  padding:0.55rem 0.6rem;
+  border-radius:8px;
+  border:1px solid var(--felt-line);
+  background:rgba(0,0,0,0.22);
+  color:var(--cream);
+  font-size:0.85rem;
+  color-scheme:dark;
+}
+.date-input:focus{ outline:none; border-color:var(--gold); }
+
+.overdue{ color:var(--bad); font-weight:600; }
+
 .text-input{
   flex:1 1 160px;
   min-width:0;

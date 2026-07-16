@@ -37,6 +37,12 @@
             <span>฿</span>
             <input type="number" id="borrowerAmount" min="0" step="1" placeholder="จำนวนเงินกู้">
           </div>
+          <label class="date-field">วันที่กู้
+            <input type="date" id="loanDate" class="date-input">
+          </label>
+          <label class="date-field">ครบชำระ
+            <input type="date" id="dueDate" class="date-input">
+          </label>
           <button id="btn-add" class="entry-btn add">เพิ่ม</button>
         </div>
         <p class="error-line" id="errorLine"></p>
@@ -79,15 +85,18 @@
               <tr>
                 <th>#</th>
                 <th>ผู้กู้</th>
+                <th>วันที่กู้</th>
+                <th>ครบชำระ</th>
                 <th>จำนวนเงินกู้</th>
                 <th>ดอกเบี้ย</th>
                 <th>ยอดรวม</th>
                 <th>สถานะ</th>
+                <th>วันที่ชำระ</th>
                 <th></th>
               </tr>
             </thead>
             <tbody id="loanBody">
-              <tr class="empty-row" id="emptyRow"><td colspan="7">ยังไม่มีรายการผู้กู้ เพิ่มรายการแรกด้านบนได้เลย</td></tr>
+              <tr class="empty-row" id="emptyRow"><td colspan="10">ยังไม่มีรายการผู้กู้ เพิ่มรายการแรกด้านบนได้เลย</td></tr>
             </tbody>
           </table>
         </div>
