@@ -8,6 +8,8 @@ const els = {
   modeNumber: document.getElementById('modeNumber'),
   avgNumber: document.getElementById('avgNumber'),
   reverseNumber: document.getElementById('reverseNumber'),
+  markovNumber: document.getElementById('markovNumber'),
+  markovDetail: document.getElementById('markovDetail'),
   freqGrid: document.getElementById('freqGrid'),
   hotDigits: document.getElementById('hotDigits'),
   coldDigits: document.getElementById('coldDigits'),
@@ -72,6 +74,8 @@ function clearAll(){
   els.modeNumber.textContent = '—';
   els.avgNumber.textContent = '—';
   els.reverseNumber.textContent = '—';
+  els.markovNumber.textContent = '—';
+  els.markovDetail.textContent = '';
   els.hotDigits.textContent = '—';
   els.coldDigits.textContent = '—';
   renderFreqGrid(new Array(10).fill(0));
@@ -117,6 +121,12 @@ function calculate(){
 
   els.reverseNumber.textContent = trendStr.split('').reverse().join('');
 
+  const markov = markovPrediction(draws);
+  els.markovNumber.textContent = markov.map(p => p.predicted).join('');
+  els.markovDetail.textContent = markov.every(p => p.seen)
+    ? 'ทุกหลักเคยเห็นเลขปัจจุบันตามหลังเลขอื่นมาก่อน จึงเลือกเลขที่ตามมาบ่อยที่สุดในประวัติได้ตรง ๆ'
+    : 'บางหลักไม่เคยเห็นเลขปัจจุบันมาก่อนในประวัติ 10 งวด จึงใช้เลขฐานนิยม (โหมด) ของหลักนั้นแทน';
+
   const freq = overallFrequency(draws);
   renderFreqGrid(freq);
 
@@ -147,6 +157,40 @@ function trendPrediction(draws){
     const lastDigit = draws[draws.length - 1][pos];
     const predicted = (lastDigit + bestDiff) % 10;
     result.push({ pos, diffs, bestDiff, consistent, lastDigit, predicted });
+  }
+  return result;
+}
+
+// For each of the 4 positions, builds a transition matrix from the 9
+// consecutive draw-to-draw pairs: transitions[from][to] = how many times
+// digit "to" immediately followed digit "from" at that position. Predicts
+// the digit most often seen right after the newest draw's digit. If that
+// digit was never seen as a "from" state in the history, falls back to the
+// overall positional mode instead of guessing blindly.
+function markovPrediction(draws){
+  const result = [];
+  for (let pos = 0; pos < 4; pos++){
+    const transitions = Array.from({ length: 10 }, () => new Array(10).fill(0));
+    for (let i = 1; i < draws.length; i++){
+      transitions[draws[i - 1][pos]][draws[i][pos]]++;
+    }
+    const lastDigit = draws[draws.length - 1][pos];
+    const row = transitions[lastDigit];
+    const rowTotal = row.reduce((a, b) => a + b, 0);
+
+    let predicted, seen;
+    if (rowTotal > 0){
+      const maxCount = Math.max(...row);
+      predicted = row.findIndex(c => c === maxCount);
+      seen = true;
+    } else {
+      const overall = new Array(10).fill(0);
+      draws.forEach(d => overall[d[pos]]++);
+      const maxCount = Math.max(...overall);
+      predicted = overall.findIndex(c => c === maxCount);
+      seen = false;
+    }
+    result.push({ pos, lastDigit, predicted, seen, rowTotal });
   }
   return result;
 }
