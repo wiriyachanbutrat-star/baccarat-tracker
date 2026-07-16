@@ -10,6 +10,14 @@
   --muted:rgba(241,234,217,0.58);
   --good:#e3c15c;
   --bad:#c1555a;
+  /* Chart-only colors, run through the dataviz palette validator against
+     this theme's dark surface (all checks pass: lightness band, chroma
+     floor, CVD separation >=8, normal-vision floor >=15, contrast >=3:1).
+     --good above is too light (OKLch L 0.82) for a chart mark, so charts
+     use --chart-paid instead of --good. */
+  --chart-paid:#b8860b;
+  --chart-unpaid:#c1555a;
+  --chart-bar:#4f86c0;
   --panel-radius:14px;
   --shadow: 0 18px 40px rgba(0,0,0,0.35);
 }
@@ -155,6 +163,83 @@ h1{
   flex-wrap:wrap;
   gap:0.6rem;
   align-items:center;
+}
+
+/* Chart building blocks (bar chart, tooltip, legend) — plain SVG/HTML per
+   the dataviz skill, no charting library. Marks are thin bars with 4px
+   rounded data-ends, a 2px surface gap between stacked segments, recessive
+   gridlines/axis text, and a hover tooltip. Each chart's table (right
+   below it on the page) is its WCAG-clean twin. */
+.chart-wrap{
+  margin-bottom:1rem;
+  overflow-x:auto;
+}
+.chart-wrap svg{ display:block; overflow:visible; }
+
+.chart-grid-line{ stroke:var(--felt-line); stroke-width:1; }
+.chart-axis-label{
+  fill:var(--muted);
+  font-size:10px;
+  font-family:"Segoe UI",Arial,sans-serif;
+}
+.chart-value-label{
+  fill:var(--cream);
+  font-size:10.5px;
+  font-family:"Segoe UI",Arial,sans-serif;
+  font-weight:600;
+}
+
+.chart-bar-paid{ fill:var(--chart-paid); }
+.chart-bar-unpaid{ fill:var(--chart-unpaid); }
+.chart-bar-single{ fill:var(--chart-bar); }
+.chart-bar-paid, .chart-bar-unpaid, .chart-bar-single{
+  cursor:pointer;
+  transition:opacity 0.12s ease;
+}
+.chart-bar-paid:hover, .chart-bar-unpaid:hover, .chart-bar-single:hover{
+  opacity:0.82;
+}
+
+.chart-legend{
+  display:flex;
+  gap:1.2rem;
+  margin-bottom:0.8rem;
+  font-size:0.78rem;
+  color:var(--muted);
+}
+.legend-item{ display:flex; align-items:center; gap:0.4rem; }
+.legend-item .swatch{
+  width:10px;
+  height:10px;
+  border-radius:2px;
+  display:inline-block;
+}
+.swatch.paid{ background:var(--chart-paid); }
+.swatch.unpaid{ background:var(--chart-unpaid); }
+
+.chart-tooltip{
+  position:absolute;
+  pointer-events:none;
+  background:var(--felt-900);
+  border:1px solid var(--gold);
+  border-radius:8px;
+  padding:0.45rem 0.65rem;
+  font-size:0.76rem;
+  color:var(--cream);
+  box-shadow:var(--shadow);
+  white-space:nowrap;
+  z-index:10;
+  opacity:0;
+  transition:opacity 0.1s ease;
+}
+.chart-tooltip.visible{ opacity:1; }
+.chart-tooltip .tt-title{ color:var(--gold-soft); font-weight:700; margin-bottom:0.2rem; }
+
+.chart-empty{
+  padding:1.5rem;
+  text-align:center;
+  color:var(--muted);
+  font-size:0.85rem;
 }
 
 .filter-row{
