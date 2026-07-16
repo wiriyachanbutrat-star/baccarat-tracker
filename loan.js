@@ -145,6 +145,17 @@ function cutInterest(id){
   render();
 }
 
+// Undo the most recent "ตัดดอก" — for when it was clicked by mistake.
+// Removes the last logged payment and rolls the due date back a month.
+function undoCutInterest(id){
+  const loan = state.loans.find(l => l.id === id);
+  if (!loan || !loan.interestPayments || loan.interestPayments.length === 0) return;
+  loan.interestPayments.pop();
+  loan.dueDate = addMonths(loan.dueDate || todayISO(), -1);
+  saveState();
+  render();
+}
+
 function renameLoan(id, name){
   const loan = state.loans.find(l => l.id === id);
   if (loan) loan.name = name;
@@ -197,6 +208,7 @@ function render(){
         <td>
           <button class="status-btn ${loan.paid ? 'paid' : 'pending'}">${loan.paid ? 'ชำระแล้ว' : 'รอชำระ'}</button>
           ${!loan.paid ? `<button class="status-btn cut-interest" title="${cutInterestTitle(loan)}">ตัดดอก${loan.interestPayments && loan.interestPayments.length ? ` (${loan.interestPayments.length})` : ''}</button>` : ''}
+          ${!loan.paid && loan.interestPayments && loan.interestPayments.length ? `<button class="status-btn undo-cut" title="ยกเลิกการตัดดอกครั้งล่าสุด">↺</button>` : ''}
         </td>
         <td>${formatDate(loan.paidDate)}</td>
         <td><button class="row-delete" title="ลบรายการนี้">✕</button></td>
@@ -208,6 +220,8 @@ function render(){
       tr.querySelector('.status-btn.pending, .status-btn.paid').addEventListener('click', () => toggleStatus(loan.id));
       const cutBtn = tr.querySelector('.cut-interest');
       if (cutBtn) cutBtn.addEventListener('click', () => cutInterest(loan.id));
+      const undoBtn = tr.querySelector('.undo-cut');
+      if (undoBtn) undoBtn.addEventListener('click', () => undoCutInterest(loan.id));
       tr.querySelector('.row-delete').addEventListener('click', () => deleteLoan(loan.id));
 
       els.loanBody.appendChild(tr);
