@@ -56,6 +56,8 @@ const els = {
   borrowerAmount: document.getElementById('borrowerAmount'),
   loanDate: document.getElementById('loanDate'),
   dueDate: document.getElementById('dueDate'),
+  borrowerList: document.getElementById('borrowerList'),
+  borrowerHint: document.getElementById('borrowerHint'),
   btnAdd: document.getElementById('btn-add'),
   btnClear: document.getElementById('btn-clear'),
   errorLine: document.getElementById('errorLine'),
@@ -99,6 +101,7 @@ function addLoan(){
   els.borrowerAmount.value = '';
   els.loanDate.value = todayISO();
   els.dueDate.value = '';
+  els.borrowerHint.textContent = '';
   els.borrowerName.focus();
   saveState();
   render();
@@ -137,6 +140,11 @@ function render(){
   const rate = Math.max(0, Number(els.rateInput.value) || 0);
   state.rate = rate;
   saveState();
+
+  // Autocomplete: suggest existing borrower names so a repeat borrower can
+  // be picked instead of retyped (browser's native <input list> dropdown).
+  const uniqueNames = [...new Set(state.loans.map(l => l.name))];
+  els.borrowerList.innerHTML = uniqueNames.map(n => `<option value="${n.replace(/"/g, '&quot;')}">`).join('');
 
   els.loanBody.innerHTML = '';
 
@@ -185,9 +193,31 @@ function render(){
   els.sumUnpaid.textContent = formatMoney(sumUnpaid);
 }
 
+// When the typed/selected name matches an existing borrower (case-
+// insensitive, trimmed), pull up their existing outstanding balance as a
+// hint -- not just autocompleting the text, but surfacing their data too.
+function updateBorrowerHint(){
+  const typed = els.borrowerName.value.trim().toLowerCase();
+  if (!typed){ els.borrowerHint.textContent = ''; return; }
+
+  const rate = Math.max(0, Number(els.rateInput.value) || 0);
+  const existing = state.loans.filter(l => l.name.trim().toLowerCase() === typed);
+  if (existing.length === 0){ els.borrowerHint.textContent = ''; return; }
+
+  const unpaidTotal = existing
+    .filter(l => !l.paid)
+    .reduce((s, l) => s + l.principal * (1 + rate / 100), 0);
+  const paidCount = existing.filter(l => l.paid).length;
+
+  els.borrowerHint.textContent = unpaidTotal > 0
+    ? `ผู้กู้เดิม "${existing[0].name}" — มียอดค้างชำระอยู่แล้ว ${formatMoney(unpaidTotal)} (${existing.length} รายการ)`
+    : `ผู้กู้เดิม "${existing[0].name}" — ชำระครบทุกยอดแล้ว (${paidCount} รายการที่ผ่านมา)`;
+}
+
 els.btnAdd.addEventListener('click', addLoan);
 els.borrowerAmount.addEventListener('keydown', (e) => { if (e.key === 'Enter') addLoan(); });
 els.borrowerName.addEventListener('keydown', (e) => { if (e.key === 'Enter') addLoan(); });
+els.borrowerName.addEventListener('input', updateBorrowerHint);
 els.btnClear.addEventListener('click', clearAll);
 els.rateInput.addEventListener('input', render);
 

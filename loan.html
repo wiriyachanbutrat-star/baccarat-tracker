@@ -32,7 +32,8 @@
       <section class="card">
         <h2 class="section-title">เพิ่มผู้กู้ใหม่</h2>
         <div class="add-row">
-          <input type="text" id="borrowerName" class="text-input" placeholder="ชื่อผู้กู้">
+          <input type="text" id="borrowerName" class="text-input" placeholder="ชื่อผู้กู้" list="borrowerList" autocomplete="off">
+          <datalist id="borrowerList"></datalist>
           <div class="bet-input-wrap">
             <span>฿</span>
             <input type="number" id="borrowerAmount" min="0" step="1" placeholder="จำนวนเงินกู้">
@@ -45,6 +46,7 @@
           </label>
           <button id="btn-add" class="entry-btn add">เพิ่ม</button>
         </div>
+        <p class="hint" id="borrowerHint"></p>
         <p class="error-line" id="errorLine"></p>
       </section>
 
