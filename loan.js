@@ -22,6 +22,12 @@ function formatDate(iso){
   return `${Number(d)}/${Number(m)}/${y}`;
 }
 
+function addMonths(iso, n){
+  const base = iso ? new Date(iso + 'T00:00:00') : new Date();
+  base.setMonth(base.getMonth() + n);
+  return base.toISOString().slice(0, 10);
+}
+
 let saveTimer = null;
 
 async function loadState(){
@@ -96,6 +102,7 @@ function addLoan(){
     loanDate: els.loanDate.value || todayISO(),
     dueDate: els.dueDate.value || '',
     paidDate: null,
+    interestPayments: [],
   });
   els.borrowerName.value = '';
   els.borrowerAmount.value = '';
@@ -123,6 +130,21 @@ function toggleStatus(id){
   render();
 }
 
+// "ตัดดอก" — borrower pays interest-only this period; principal carries
+// over unchanged, and the due date rolls forward a month. History of each
+// cut is kept on the loan so past interest payments aren't lost.
+function cutInterest(id){
+  const loan = state.loans.find(l => l.id === id);
+  if (!loan || loan.paid) return;
+  const rate = Math.max(0, Number(els.rateInput.value) || 0);
+  const interest = loan.principal * (rate / 100);
+  if (!loan.interestPayments) loan.interestPayments = [];
+  loan.interestPayments.push({ date: todayISO(), amount: interest });
+  loan.dueDate = addMonths(loan.dueDate || todayISO(), 1);
+  saveState();
+  render();
+}
+
 function renameLoan(id, name){
   const loan = state.loans.find(l => l.id === id);
   if (loan) loan.name = name;
@@ -134,6 +156,13 @@ function clearAll(){
   state.loans = [];
   saveState();
   render();
+}
+
+function cutInterestTitle(loan){
+  if (!loan.interestPayments || loan.interestPayments.length === 0) return 'ยังไม่เคยตัดดอก';
+  return 'ประวัติตัดดอก:\n' + loan.interestPayments
+    .map(p => `${formatDate(p.date)} — ${formatMoney(p.amount)}`)
+    .join('\n');
 }
 
 function render(){
@@ -165,7 +194,10 @@ function render(){
         <td class="amount">${formatMoney(loan.principal)}</td>
         <td class="amount">${formatMoney(interest)}</td>
         <td class="amount"><strong>${formatMoney(total)}</strong></td>
-        <td><button class="status-btn ${loan.paid ? 'paid' : 'pending'}">${loan.paid ? 'ชำระแล้ว' : 'รอชำระ'}</button></td>
+        <td>
+          <button class="status-btn ${loan.paid ? 'paid' : 'pending'}">${loan.paid ? 'ชำระแล้ว' : 'รอชำระ'}</button>
+          ${!loan.paid ? `<button class="status-btn cut-interest" title="${cutInterestTitle(loan)}">ตัดดอก${loan.interestPayments && loan.interestPayments.length ? ` (${loan.interestPayments.length})` : ''}</button>` : ''}
+        </td>
         <td>${formatDate(loan.paidDate)}</td>
         <td><button class="row-delete" title="ลบรายการนี้">✕</button></td>
       `;
@@ -173,7 +205,9 @@ function render(){
       tr.querySelector('.borrower-name-input').addEventListener('change', (e) => {
         renameLoan(loan.id, e.target.value.trim() || loan.name);
       });
-      tr.querySelector('.status-btn').addEventListener('click', () => toggleStatus(loan.id));
+      tr.querySelector('.status-btn.pending, .status-btn.paid').addEventListener('click', () => toggleStatus(loan.id));
+      const cutBtn = tr.querySelector('.cut-interest');
+      if (cutBtn) cutBtn.addEventListener('click', () => cutInterest(loan.id));
       tr.querySelector('.row-delete').addEventListener('click', () => deleteLoan(loan.id));
 
       els.loanBody.appendChild(tr);

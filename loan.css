@@ -459,6 +459,12 @@ h1{
   color:var(--good);
   border-color:var(--good);
 }
+.status-btn.cut-interest{
+  background:rgba(79,134,192,0.16);
+  color:var(--chart-bar);
+  border-color:var(--chart-bar);
+  margin-left:0.35rem;
+}
 
 .row-delete{
   appearance:none;
