@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>รายงานเงินกู้</title>
+  <link rel="stylesheet" href="loan.css">
+</head>
+<body>
+  <div class="table-frame">
+    <header>
+      <p class="eyebrow">Loan Tracker</p>
+      <h1>รายงานเงินกู้</h1>
+      <div class="nav-row">
+        <a class="nav-link" href="loan.html">← กลับไปหน้าบันทึกเงินกู้</a>
+        <a class="nav-link" href="index.html">ไปหน้าเว็บบาคาร่า →</a>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="card">
+        <h2 class="section-title">ตัวกรองรายงาน</h2>
+        <div class="filter-row">
+          <div class="view-toggle">
+            <button class="view-btn active" data-view="month">รายเดือน</button>
+            <button class="view-btn" data-view="year">รายปี</button>
+          </div>
+          <label class="filter-field">ปี
+            <select id="yearFilter"><option value="">ทั้งหมด</option></select>
+          </label>
+          <label class="filter-field" id="monthFilterWrap">เดือน
+            <select id="monthFilter"><option value="">ทั้งหมด</option></select>
+          </label>
+          <label class="filter-field">ผู้กู้
+            <select id="borrowerFilter"><option value="">ทั้งหมด</option></select>
+          </label>
+        </div>
+        <p class="hint">กรองจากวันที่กู้ (วันที่ครบชำระ/ชำระไม่ได้ใช้ในการกรองนี้)</p>
+      </section>
+
+      <section class="card summary-card">
+        <h2 class="section-title">สรุปยอดตามตัวกรอง</h2>
+        <div class="summary-grid">
+          <div class="summary-tile">
+            <div class="lbl">จำนวนรายการ</div>
+            <div class="val" id="repCount">0</div>
+          </div>
+          <div class="summary-tile">
+            <div class="lbl">เงินกู้รวม</div>
+            <div class="val" id="repPrincipal">฿0</div>
+          </div>
+          <div class="summary-tile">
+            <div class="lbl">ดอกเบี้ยรวม</div>
+            <div class="val" id="repInterest">฿0</div>
+          </div>
+          <div class="summary-tile">
+            <div class="lbl">ยอดรวมทั้งหมด</div>
+            <div class="val" id="repTotal">฿0</div>
+          </div>
+          <div class="summary-tile good">
+            <div class="lbl">ชำระแล้ว</div>
+            <div class="val" id="repPaid">฿0</div>
+          </div>
+          <div class="summary-tile bad">
+            <div class="lbl">ค้างชำระ</div>
+            <div class="val" id="repUnpaid">฿0</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title">แยกตามผู้กู้</h2>
+        <div class="table-wrap">
+          <table class="loan-table">
+            <thead>
+              <tr>
+                <th>ผู้กู้</th>
+                <th>จำนวนรายการ</th>
+                <th>เงินกู้รวม</th>
+                <th>ดอกเบี้ยรวม</th>
+                <th>ยอดรวม</th>
+                <th>ชำระแล้ว</th>
+                <th>ค้างชำระ</th>
+              </tr>
+            </thead>
+            <tbody id="borrowerReportBody">
+              <tr class="empty-row" id="reportEmptyRow"><td colspan="7">กำลังโหลดข้อมูล...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="section-title" id="periodTableTitle">แยกตามเดือน</h2>
+        <div class="table-wrap">
+          <table class="loan-table">
+            <thead>
+              <tr>
+                <th id="periodColHeader">เดือน</th>
+                <th>จำนวนรายการ</th>
+                <th>เงินกู้รวม</th>
+                <th>ดอกเบี้ยรวม</th>
+                <th>ยอดรวม</th>
+                <th>ชำระแล้ว</th>
+                <th>ค้างชำระ</th>
+              </tr>
+            </thead>
+            <tbody id="periodReportBody">
+              <tr class="empty-row"><td colspan="7">กำลังโหลดข้อมูล...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script src="loan-report.js"></script>
+</body>
+</html>

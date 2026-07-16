@@ -157,6 +157,53 @@ h1{
   align-items:center;
 }
 
+.filter-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:0.8rem;
+  align-items:center;
+}
+
+.view-toggle{
+  display:flex;
+  gap:0.4rem;
+}
+.view-btn{
+  appearance:none;
+  border:1px solid var(--felt-line);
+  background:rgba(0,0,0,0.2);
+  color:var(--muted);
+  padding:0.5rem 0.9rem;
+  border-radius:8px;
+  font-size:0.85rem;
+  cursor:pointer;
+  transition:background 0.15s ease, color 0.15s ease;
+}
+.view-btn.active{
+  border-color:var(--gold);
+  background:rgba(201,162,39,0.18);
+  color:var(--gold-soft);
+  font-weight:600;
+}
+.view-btn:hover{ color:var(--cream); }
+
+.filter-field{
+  display:flex;
+  flex-direction:column;
+  gap:0.25rem;
+  font-size:0.72rem;
+  color:var(--muted);
+}
+.filter-field select{
+  padding:0.5rem 0.6rem;
+  border-radius:8px;
+  border:1px solid var(--felt-line);
+  background:rgba(0,0,0,0.22);
+  color:var(--cream);
+  font-size:0.85rem;
+}
+.filter-field select:focus{ outline:none; border-color:var(--gold); }
+
 .date-field{
   display:flex;
   flex-direction:column;
