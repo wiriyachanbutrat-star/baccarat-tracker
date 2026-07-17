@@ -50,6 +50,9 @@ function saveState(){
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(state),
+    }).then(res => {
+      if (!res.ok) throw new Error('bad status ' + res.status);
+      els.errorLine.textContent = '';
     }).catch(() => {
       els.errorLine.textContent = 'บันทึกขึ้น Google Sheet ไม่สำเร็จ (เช็คอินเทอร์เน็ต) — ลองใหม่อีกครั้ง';
     });
@@ -179,7 +182,6 @@ function cutInterestTitle(loan){
 function render(){
   const rate = Math.max(0, Number(els.rateInput.value) || 0);
   state.rate = rate;
-  saveState();
 
   // Autocomplete: suggest existing borrower names so a repeat borrower can
   // be picked instead of retyped (browser's native <input list> dropdown).
@@ -267,7 +269,7 @@ els.borrowerAmount.addEventListener('keydown', (e) => { if (e.key === 'Enter') a
 els.borrowerName.addEventListener('keydown', (e) => { if (e.key === 'Enter') addLoan(); });
 els.borrowerName.addEventListener('input', updateBorrowerHint);
 els.btnClear.addEventListener('click', clearAll);
-els.rateInput.addEventListener('input', render);
+els.rateInput.addEventListener('input', () => { render(); saveState(); });
 
 // initial — show a loading state while the Sheet data comes in
 els.emptyRow.querySelector('td').textContent = 'กำลังโหลดข้อมูลจาก Google Sheet...';
