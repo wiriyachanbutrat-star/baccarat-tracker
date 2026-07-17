@@ -307,6 +307,21 @@ h1{
 
 .overdue{ color:var(--bad); font-weight:600; }
 
+.due-soon td{ background:rgba(169,124,20,0.14); }
+.due-soon td.overdue{ background:rgba(168,57,63,0.14); }
+
+.due-soon-banner{
+  margin:0;
+  padding:0.7rem 1rem;
+  border-radius:8px;
+  border:1px solid var(--gold);
+  background:rgba(169,124,20,0.14);
+  color:var(--gold);
+  font-size:0.85rem;
+  font-weight:600;
+}
+.due-soon-banner[hidden]{ display:none; }
+
 .text-input{
   flex:1 1 160px;
   min-width:0;

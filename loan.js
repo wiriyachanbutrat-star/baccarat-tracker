@@ -22,6 +22,14 @@ function formatDate(iso){
   return `${Number(d)}/${Number(m)}/${y}`;
 }
 
+// Whole days from today to the given ISO date (negative if in the past).
+function daysUntil(iso){
+  if (!iso) return NaN;
+  const today = new Date(todayISO() + 'T00:00:00');
+  const target = new Date(iso + 'T00:00:00');
+  return Math.round((target - today) / 86400000);
+}
+
 function addMonths(iso, n){
   const base = iso ? new Date(iso + 'T00:00:00') : new Date();
   base.setMonth(base.getMonth() + n);
@@ -70,6 +78,7 @@ const els = {
   btnAdd: document.getElementById('btn-add'),
   btnClear: document.getElementById('btn-clear'),
   errorLine: document.getElementById('errorLine'),
+  dueSoonBanner: document.getElementById('dueSoonBanner'),
   loanBody: document.getElementById('loanBody'),
   emptyRow: document.getElementById('emptyRow'),
   sumPrincipal: document.getElementById('sumPrincipal'),
@@ -163,13 +172,16 @@ function render(){
       const interest = loan.principal * (rate / 100);
       const total = loan.principal + interest;
       const isOverdue = !loan.paid && loan.dueDate && loan.dueDate < todayISO();
+      const daysLeft = loan.dueDate ? daysUntil(loan.dueDate) : NaN;
+      const isDueSoon = !loan.paid && !isOverdue && daysLeft >= 0 && daysLeft <= 2;
 
       const tr = document.createElement('tr');
+      if (isDueSoon) tr.classList.add('due-soon');
       tr.innerHTML = `
         <td>${idx + 1}</td>
         <td><input type="text" class="borrower-name-input" value="${loan.name.replace(/"/g, '&quot;')}"></td>
         <td>${formatDate(loan.loanDate)}</td>
-        <td class="${isOverdue ? 'overdue' : ''}">${formatDate(loan.dueDate)}${isOverdue ? ' ⚠' : ''}</td>
+        <td class="${isOverdue ? 'overdue' : ''}">${formatDate(loan.dueDate)}${isOverdue ? ' ⚠' : isDueSoon ? ' ⏰' : ''}</td>
         <td class="amount">${formatMoney(loan.principal)}</td>
         <td class="amount">${formatMoney(interest)}</td>
         <td class="amount"><strong>${formatMoney(total)}</strong></td>
@@ -201,6 +213,22 @@ function render(){
   els.sumTotal.textContent = formatMoney(sumTotal);
   els.sumPaid.textContent = formatMoney(sumPaid);
   els.sumUnpaid.textContent = formatMoney(sumUnpaid);
+
+  const dueSoonLoans = state.loans.filter(l => {
+    if (l.paid || !l.dueDate) return false;
+    const d = daysUntil(l.dueDate);
+    return d >= 0 && d <= 2;
+  });
+  if (dueSoonLoans.length === 0){
+    els.dueSoonBanner.textContent = '';
+    els.dueSoonBanner.hidden = true;
+  } else {
+    const names = dueSoonLoans
+      .map(l => `${l.name} (ครบกำหนด ${formatDate(l.dueDate)})`)
+      .join(', ');
+    els.dueSoonBanner.textContent = `⏰ ใกล้ครบกำหนดชำระภายใน 2 วัน: ${names}`;
+    els.dueSoonBanner.hidden = false;
+  }
 }
 
 // When the typed/selected name matches an existing borrower (case-
