@@ -105,14 +105,21 @@ function addLoan(){
     return;
   }
 
+  const loanDate = els.loanDate.value || todayISO();
+  const dueDate = els.dueDate.value || '';
+  const confirmed = confirm(
+    `ยืนยันเพิ่มรายการนี้?\n\nผู้กู้: ${name}\nเงินกู้: ${formatMoney(amount)}\nวันที่กู้: ${formatDate(loanDate)}\nครบชำระ: ${dueDate ? formatDate(dueDate) : 'ไม่ระบุ'}`
+  );
+  if (!confirmed) return;
+
   els.errorLine.textContent = '';
   state.loans.push({
     id: Date.now() + Math.random(),
     name,
     principal: amount,
     paid: false,
-    loanDate: els.loanDate.value || todayISO(),
-    dueDate: els.dueDate.value || '',
+    loanDate,
+    dueDate,
     paidDate: null,
   });
   els.borrowerName.value = '';
@@ -126,6 +133,14 @@ function addLoan(){
 }
 
 function deleteLoan(id){
+  const loan = state.loans.find(l => l.id === id);
+  if (!loan) return;
+  const rate = Math.max(0, Number(els.rateInput.value) || 0);
+  const total = loan.principal + loan.principal * (rate / 100);
+  const confirmed = confirm(
+    `ยืนยันลบรายการนี้?\n\nผู้กู้: ${loan.name}\nเงินกู้: ${formatMoney(loan.principal)}\nยอดรวม: ${formatMoney(total)}\nสถานะ: ${loan.paid ? 'ชำระแล้ว' : 'รอชำระ'}`
+  );
+  if (!confirmed) return;
   state.loans = state.loans.filter(l => l.id !== id);
   saveState();
   render();
@@ -149,6 +164,13 @@ function renameLoan(id, name){
 
 function clearAll(){
   if (state.loans.length === 0) return;
+  const rate = Math.max(0, Number(els.rateInput.value) || 0);
+  const totalPrincipal = state.loans.reduce((s, l) => s + l.principal, 0);
+  const totalAll = state.loans.reduce((s, l) => s + l.principal * (1 + rate / 100), 0);
+  const confirmed = confirm(
+    `ยืนยันลบรายการทั้งหมด?\n\nจำนวนรายการ: ${state.loans.length}\nเงินกู้รวม: ${formatMoney(totalPrincipal)}\nยอดรวมทั้งหมด: ${formatMoney(totalAll)}\n\nการลบนี้ไม่สามารถกู้คืนได้`
+  );
+  if (!confirmed) return;
   state.loans = [];
   saveState();
   render();
