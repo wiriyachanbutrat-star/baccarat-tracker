@@ -83,8 +83,6 @@ const els = {
   emptyRow: document.getElementById('emptyRow'),
   sumPrincipal: document.getElementById('sumPrincipal'),
   sumInterest: document.getElementById('sumInterest'),
-  sumTotal: document.getElementById('sumTotal'),
-  sumPaid: document.getElementById('sumPaid'),
   sumUnpaid: document.getElementById('sumUnpaid'),
 };
 
@@ -224,16 +222,13 @@ function render(){
     });
   }
 
-  const sumPrincipal = state.loans.reduce((s, l) => s + l.principal, 0);
-  const sumInterest = state.loans.reduce((s, l) => s + l.principal * (rate / 100), 0);
-  const sumTotal = sumPrincipal + sumInterest;
-  const sumPaid = state.loans.filter(l => l.paid).reduce((s, l) => s + l.principal * (1 + rate / 100), 0);
-  const sumUnpaid = sumTotal - sumPaid;
+  const unpaidLoans = state.loans.filter(l => !l.paid);
+  const sumPrincipal = unpaidLoans.reduce((s, l) => s + l.principal, 0);
+  const sumInterest = unpaidLoans.reduce((s, l) => s + l.principal * (rate / 100), 0);
+  const sumUnpaid = sumPrincipal + sumInterest;
 
   els.sumPrincipal.textContent = formatMoney(sumPrincipal);
   els.sumInterest.textContent = formatMoney(sumInterest);
-  els.sumTotal.textContent = formatMoney(sumTotal);
-  els.sumPaid.textContent = formatMoney(sumPaid);
   els.sumUnpaid.textContent = formatMoney(sumUnpaid);
 
   const dueSoonLoans = state.loans.filter(l => {
