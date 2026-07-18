@@ -229,7 +229,7 @@ function render(){
 
   els.sumPrincipal.textContent = formatMoney(sumUnpaid);
   els.sumInterest.textContent = formatMoney(sumInterest);
-  els.sumUnpaid.textContent = formatMoney(sumUnpaid);
+  els.sumUnpaid.textContent = formatMoney(sumPrincipal);
 
   const dueSoonLoans = state.loans.filter(l => {
     if (l.paid || !l.dueDate) return false;
