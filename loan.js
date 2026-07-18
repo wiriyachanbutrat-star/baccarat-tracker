@@ -160,6 +160,14 @@ function renameLoan(id, name){
   saveState();
 }
 
+function updateLoanField(id, field, value){
+  const loan = state.loans.find(l => l.id === id);
+  if (!loan) return;
+  loan[field] = value;
+  saveState();
+  render();
+}
+
 function clearAll(){
   if (state.loans.length === 0) return;
   const rate = Math.max(0, Number(els.rateInput.value) || 0);
@@ -200,9 +208,9 @@ function render(){
       tr.innerHTML = `
         <td>${idx + 1}</td>
         <td><input type="text" class="borrower-name-input" value="${loan.name.replace(/"/g, '&quot;')}"></td>
-        <td>${formatDate(loan.loanDate)}</td>
-        <td class="${isOverdue ? 'overdue' : ''}">${formatDate(loan.dueDate)}${isOverdue ? ' ⚠' : isDueSoon ? ' ⏰' : ''}</td>
-        <td class="amount">${formatMoney(loan.principal)}</td>
+        <td><input type="date" class="loan-date-input" value="${loan.loanDate || ''}"></td>
+        <td class="${isOverdue ? 'overdue' : ''}"><input type="date" class="due-date-input" value="${loan.dueDate || ''}">${isOverdue ? ' ⚠' : isDueSoon ? ' ⏰' : ''}</td>
+        <td class="amount"><input type="number" class="principal-input" min="0" step="1" value="${loan.principal}"></td>
         <td class="amount">${formatMoney(interest)}</td>
         <td class="amount"><strong>${formatMoney(total)}</strong></td>
         <td>
@@ -214,6 +222,16 @@ function render(){
 
       tr.querySelector('.borrower-name-input').addEventListener('change', (e) => {
         renameLoan(loan.id, e.target.value.trim() || loan.name);
+      });
+      tr.querySelector('.loan-date-input').addEventListener('change', (e) => {
+        updateLoanField(loan.id, 'loanDate', e.target.value);
+      });
+      tr.querySelector('.due-date-input').addEventListener('change', (e) => {
+        updateLoanField(loan.id, 'dueDate', e.target.value);
+      });
+      tr.querySelector('.principal-input').addEventListener('change', (e) => {
+        const val = Number(e.target.value);
+        updateLoanField(loan.id, 'principal', val > 0 ? val : loan.principal);
       });
       tr.querySelector('.status-btn.pending, .status-btn.paid').addEventListener('click', () => toggleStatus(loan.id));
       tr.querySelector('.row-delete').addEventListener('click', () => deleteLoan(loan.id));

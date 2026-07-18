@@ -499,3 +499,19 @@ h1{
   min-width:80px;
 }
 .borrower-name-input:focus{ outline:none; border-bottom:1px solid var(--gold); }
+
+.loan-date-input,
+.due-date-input,
+.principal-input{
+  border:none;
+  background:transparent;
+  color:var(--cream);
+  font-size:0.85rem;
+  width:100%;
+  min-width:90px;
+  color-scheme:light;
+}
+.loan-date-input:focus,
+.due-date-input:focus,
+.principal-input:focus{ outline:none; border-bottom:1px solid var(--gold); }
+.principal-input{ text-align:right; }
