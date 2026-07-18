@@ -227,7 +227,7 @@ function render(){
   const sumInterest = unpaidLoans.reduce((s, l) => s + l.principal * (rate / 100), 0);
   const sumUnpaid = sumPrincipal + sumInterest;
 
-  els.sumPrincipal.textContent = formatMoney(sumPrincipal);
+  els.sumPrincipal.textContent = formatMoney(sumUnpaid);
   els.sumInterest.textContent = formatMoney(sumInterest);
   els.sumUnpaid.textContent = formatMoney(sumUnpaid);
 
