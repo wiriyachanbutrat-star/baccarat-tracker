@@ -79,6 +79,7 @@ const els = {
   btnClear: document.getElementById('btn-clear'),
   errorLine: document.getElementById('errorLine'),
   dueSoonBanner: document.getElementById('dueSoonBanner'),
+  editNotice: document.getElementById('editNotice'),
   loanBody: document.getElementById('loanBody'),
   emptyRow: document.getElementById('emptyRow'),
   sumPrincipal: document.getElementById('sumPrincipal'),
@@ -154,18 +155,39 @@ function toggleStatus(id){
   render();
 }
 
+let editNoticeTimer = null;
+function showEditNotice(message){
+  clearTimeout(editNoticeTimer);
+  els.editNotice.textContent = message;
+  els.editNotice.hidden = false;
+  editNoticeTimer = setTimeout(() => { els.editNotice.hidden = true; }, 4000);
+}
+
+const editFieldLabels = {
+  name: 'ชื่อผู้กู้',
+  loanDate: 'วันที่กู้',
+  dueDate: 'ครบชำระ',
+  principal: 'จำนวนเงินกู้',
+};
+
 function renameLoan(id, name){
   const loan = state.loans.find(l => l.id === id);
-  if (loan) loan.name = name;
+  if (!loan || loan.name === name) return;
+  const oldName = loan.name;
+  loan.name = name;
   saveState();
+  showEditNotice(`แก้ไข${editFieldLabels.name}: "${oldName}" → "${name}"`);
 }
 
 function updateLoanField(id, field, value){
   const loan = state.loans.find(l => l.id === id);
-  if (!loan) return;
+  if (!loan || loan[field] === value) return;
+  const oldValue = loan[field];
   loan[field] = value;
   saveState();
   render();
+  const format = field === 'principal' ? formatMoney : formatDate;
+  showEditNotice(`แก้ไข${editFieldLabels[field]}ของ "${loan.name}": ${format(oldValue) || '—'} → ${format(value)}`);
 }
 
 function clearAll(){

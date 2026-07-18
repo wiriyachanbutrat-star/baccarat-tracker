@@ -322,6 +322,18 @@ h1{
 }
 .due-soon-banner[hidden]{ display:none; }
 
+.edit-notice{
+  margin:0;
+  padding:0.7rem 1rem;
+  border-radius:8px;
+  border:1px solid var(--good);
+  background:rgba(47,125,79,0.14);
+  color:var(--good);
+  font-size:0.85rem;
+  font-weight:600;
+}
+.edit-notice[hidden]{ display:none; }
+
 .text-input{
   flex:1 1 160px;
   min-width:0;
