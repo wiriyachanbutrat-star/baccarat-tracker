@@ -70,6 +70,11 @@ const els = {
   bebStrip: document.getElementById('bebStrip'),
   bebLatest: document.getElementById('bebLatest'),
   oddEvenLine: document.getElementById('oddEvenLine'),
+  patternCounts: document.getElementById('patternCounts'),
+  transBB: document.getElementById('transBB'),
+  transBP: document.getElementById('transBP'),
+  transPP: document.getElementById('transPP'),
+  transPB: document.getElementById('transPB'),
 }
 
 document.getElementById('btn-player').addEventListener('click', ()=>addResult('P'))
@@ -205,6 +210,64 @@ function buildBigRoadCells(winners){
 }
 
 const sideName = s => (s === 'B' ? 'Banker' : 'Player');
+
+// Whole-history streak-pattern tally, purely descriptive: counts how many
+// times each named shape occurred across every completed streak group in the
+// session so far (unlike getSuggestion()'s pattern engine, which only looks
+// at the CURRENT tail group to decide this round's bet). Not used for
+// betting — just answers "how often has each shape shown up so far".
+function computeStreakPatternCounts(winners){
+  const groups = buildBigRoadColumns(winners);
+  const counts = { dragon: 0, pingPong: 0, twoCut: 0, threeCut: 0, doubleDragon: 0, chop: 0 };
+
+  for (const g of groups){
+    const len = g.length;
+    if (len >= 4) counts.dragon++;
+    else if (len === 3) counts.threeCut++;
+    else if (len === 2) counts.twoCut++;
+    else if (len === 1) counts.chop++;
+  }
+
+  // Ping Pong: a run of 2+ consecutive length-1 groups (alternating sides,
+  // since adjacent groups always differ in side by construction).
+  let i = 0;
+  while (i < groups.length){
+    if (groups[i].length === 1){
+      let j = i;
+      while (j < groups.length && groups[j].length === 1) j++;
+      if (j - i >= 2) counts.pingPong++;
+      i = j;
+    } else {
+      i++;
+    }
+  }
+
+  // Double Dragon: two adjacent dragon-length groups back to back.
+  i = 0;
+  while (i < groups.length - 1){
+    if (groups[i].length >= 4 && groups[i + 1].length >= 4){
+      counts.doubleDragon++;
+      i += 2;
+    } else {
+      i++;
+    }
+  }
+
+  return counts;
+}
+
+// Transition matrix: how often each ordered pair of consecutive non-tie
+// results occurred (B->B, B->P, P->P, P->B). Descriptive summary of the
+// session so far, not a prediction — baccarat hands are independent, so this
+// table doesn't imply the next hand is more or less likely to repeat/switch.
+function computeTransitionMatrix(winners){
+  const nt = nonTieFor(winners);
+  const m = { BB: 0, BP: 0, PP: 0, PB: 0 };
+  for (let i = 1; i < nt.length; i++){
+    m[nt[i - 1] + nt[i]]++;
+  }
+  return m;
+}
 
 // All named-pattern detection (Dragon, Ping-Pong, Two/Three/Four-Cut-One)
 // removed on request, pending a new formula to replace them. getSuggestion()
@@ -994,6 +1057,35 @@ function renderMoney(sim){
   });
 }
 
+const STREAK_PATTERN_LABELS = [
+  ['dragon', 'มังกร (Dragon)'],
+  ['pingPong', 'ปิงปอง (Ping Pong)'],
+  ['twoCut', 'สองตัด (2-Cut)'],
+  ['threeCut', 'สามตัด (3-Cut)'],
+  ['doubleDragon', 'มังกรคู่ (Double Dragon)'],
+  ['chop', 'ตัดเดี่ยว (Chop)'],
+];
+
+function renderStreakPatternCounts(){
+  const winners = rounds.map(x => x.winner);
+  const counts = computeStreakPatternCounts(winners);
+  els.patternCounts.innerHTML = '';
+  STREAK_PATTERN_LABELS.forEach(([key, label]) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${label}</span><strong>${counts[key]}</strong>`;
+    els.patternCounts.appendChild(li);
+  });
+}
+
+function renderTransitionMatrix(){
+  const winners = rounds.map(x => x.winner);
+  const m = computeTransitionMatrix(winners);
+  els.transBB.textContent = m.BB;
+  els.transBP.textContent = m.BP;
+  els.transPP.textContent = m.PP;
+  els.transPB.textContent = m.PB;
+}
+
 function formatMoney(n){
   return Math.round(n).toLocaleString('th-TH');
 }
@@ -1028,6 +1120,8 @@ function updateUI(){
   renderBigRoad();
   renderBigEyeBoy();
   renderOddEven();
+  renderStreakPatternCounts();
+  renderTransitionMatrix();
 
   const baseBet = Math.max(1, Number(els.baseBet.value) || 20);
   const sim = simulateMoney(baseBet);

@@ -177,6 +177,26 @@
           </details>
         </section>
       </div>
+
+      <section class="card" id="streakAnalysisCard">
+        <h2 class="section-title" style="margin:0 0 0.6rem;">วิเคราะห์สตรีค (Streak Analysis)</h2>
+        <p class="pattern-note">นับรูปแบบที่เกิดขึ้นจริงตลอดประวัติที่บันทึกไว้ ใช้สรุปลักษณะข้อมูลที่ผ่านมาเท่านั้น ไม่ใช่การทำนายตาถัดไป</p>
+        <ul class="pattern-count-list" id="patternCounts"></ul>
+
+        <h2 class="section-title" style="margin-top:1.2rem;">ตารางการเปลี่ยนฝั่ง (Transition Matrix)</h2>
+        <p class="pattern-note">สรุปว่าจากผลตาก่อนหน้า ตาถัดไปออกฝั่งเดิมหรือสลับฝั่งบ่อยแค่ไหน (นับเฉพาะ Player/Banker ไม่รวมเสมอ) — ใช้สรุปลักษณะข้อมูล ไม่ใช่ทำนายผลในอนาคต</p>
+        <div class="transition-table-wrap">
+          <table class="transition-table">
+            <thead><tr><th>จาก</th><th>ไป</th><th>จำนวน</th></tr></thead>
+            <tbody>
+              <tr><td>Banker</td><td>Banker</td><td id="transBB">0</td></tr>
+              <tr><td>Banker</td><td>Player</td><td id="transBP">0</td></tr>
+              <tr><td>Player</td><td>Player</td><td id="transPP">0</td></tr>
+              <tr><td>Player</td><td>Banker</td><td id="transPB">0</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </div>
   <script src="script.js"></script>
