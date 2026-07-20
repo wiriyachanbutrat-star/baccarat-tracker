@@ -130,7 +130,8 @@ function computeGroups(filtered, keyFn){
       const interest = items.reduce((s, l) => s + l.principal * (rate / 100), 0);
       const total = principal + interest;
       const paid = items.filter(l => l.paid).reduce((s, l) => s + loanTotal(l), 0);
-      return { key, count: items.length, principal, interest, total, paid, unpaid: total - paid, items };
+      const outstandingPrincipal = items.filter(l => !l.paid).reduce((s, l) => s + l.principal, 0);
+      return { key, count: items.length, principal, interest, total, paid, unpaid: total - paid, outstandingPrincipal, items };
     })
     .sort((a, b) => b.key.localeCompare(a.key));
 }
@@ -147,7 +148,7 @@ function renderTable(tbody, groups){
     tr.innerHTML = `
       <td>${g.key}</td>
       <td><button type="button" class="count-toggle">${g.count} <span class="caret">▸</span></button></td>
-      <td class="amount">${formatMoney(g.principal)}</td>
+      <td class="amount">${formatMoney(g.outstandingPrincipal)}</td>
       <td class="amount">${formatMoney(g.interest)}</td>
       <td class="amount"><strong>${formatMoney(g.total)}</strong></td>
       <td class="amount">${formatMoney(g.paid)}</td>
@@ -175,6 +176,21 @@ function renderTable(tbody, groups){
       tbody.appendChild(itemRow);
       return itemRow;
     });
+
+    const totalRow = document.createElement('tr');
+    totalRow.className = 'detail-row detail-total-row';
+    totalRow.style.display = 'none';
+    totalRow.innerHTML = `
+      <td><strong>รวม</strong></td>
+      <td>${g.count}</td>
+      <td class="amount"><strong>${formatMoney(g.principal)}</strong></td>
+      <td class="amount"><strong>${formatMoney(g.interest)}</strong></td>
+      <td class="amount"><strong>${formatMoney(g.total)}</strong></td>
+      <td class="amount"><strong>${formatMoney(g.paid)}</strong></td>
+      <td class="amount ${g.unpaid > 0 ? 'overdue' : ''}"><strong>${formatMoney(g.unpaid)}</strong></td>
+    `;
+    tbody.appendChild(totalRow);
+    itemRows.push(totalRow);
 
     tr.querySelector('.count-toggle').addEventListener('click', () => {
       const open = itemRows[0] && itemRows[0].style.display !== 'none';

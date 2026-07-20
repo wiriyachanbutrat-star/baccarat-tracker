@@ -488,6 +488,12 @@ h1{
 }
 .detail-row:first-of-type td:first-child{ padding-top:0.7rem; }
 .detail-row td .muted{ color:var(--muted); font-size:0.9em; }
+.detail-total-row td{
+  color:var(--cream);
+  border-top:1px solid var(--felt-line);
+  background:rgba(169,124,20,0.08);
+  padding-bottom:0.7rem;
+}
 
 .status-btn{
   appearance:none;
