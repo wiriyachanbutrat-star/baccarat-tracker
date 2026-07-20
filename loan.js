@@ -264,7 +264,7 @@ function render(){
 
   const unpaidLoans = state.loans.filter(l => !l.paid);
   const sumPrincipal = unpaidLoans.reduce((s, l) => s + l.principal, 0);
-  const sumInterest = unpaidLoans.reduce((s, l) => s + l.principal * (rate / 100), 0);
+  const sumInterest = state.loans.filter(l => l.paid).reduce((s, l) => s + l.principal * (rate / 100), 0);
   const sumUnpaid = sumPrincipal + sumInterest;
 
   els.sumPrincipal.textContent = formatMoney(sumUnpaid);

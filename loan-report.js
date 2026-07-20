@@ -17,10 +17,8 @@ const els = {
   monthFilterWrap: document.getElementById('monthFilterWrap'),
   borrowerFilter: document.getElementById('borrowerFilter'),
   repCount: document.getElementById('repCount'),
-  repPrincipal: document.getElementById('repPrincipal'),
   repInterest: document.getElementById('repInterest'),
   repTotal: document.getElementById('repTotal'),
-  repPaid: document.getElementById('repPaid'),
   repUnpaid: document.getElementById('repUnpaid'),
   borrowerReportBody: document.getElementById('borrowerReportBody'),
   periodReportBody: document.getElementById('periodReportBody'),
@@ -102,16 +100,15 @@ function applyFilters(){
 
 function renderSummary(filtered){
   const principal = filtered.reduce((s, l) => s + l.principal, 0);
-  const interest = filtered.reduce((s, l) => s + l.principal * (rate / 100), 0);
-  const total = principal + interest;
+  const allInterest = filtered.reduce((s, l) => s + l.principal * (rate / 100), 0);
+  const interest = filtered.filter(l => l.paid).reduce((s, l) => s + l.principal * (rate / 100), 0);
   const paid = filtered.filter(l => l.paid).reduce((s, l) => s + loanTotal(l), 0);
-  const unpaid = total - paid;
+  const unpaid = (principal + allInterest) - paid;
+  const total = unpaid + interest;
 
   els.repCount.textContent = filtered.length;
-  els.repPrincipal.textContent = formatMoney(principal);
   els.repInterest.textContent = formatMoney(interest);
   els.repTotal.textContent = formatMoney(total);
-  els.repPaid.textContent = formatMoney(paid);
   els.repUnpaid.textContent = formatMoney(unpaid);
 }
 
@@ -133,7 +130,7 @@ function computeGroups(filtered, keyFn){
       const interest = items.reduce((s, l) => s + l.principal * (rate / 100), 0);
       const total = principal + interest;
       const paid = items.filter(l => l.paid).reduce((s, l) => s + loanTotal(l), 0);
-      return { key, count: items.length, principal, interest, total, paid, unpaid: total - paid };
+      return { key, count: items.length, principal, interest, total, paid, unpaid: total - paid, items };
     })
     .sort((a, b) => b.key.localeCompare(a.key));
 }
@@ -146,9 +143,10 @@ function renderTable(tbody, groups){
   }
   groups.forEach(g => {
     const tr = document.createElement('tr');
+    tr.className = 'group-row';
     tr.innerHTML = `
       <td>${g.key}</td>
-      <td>${g.count}</td>
+      <td><button type="button" class="count-toggle">${g.count} <span class="caret">▸</span></button></td>
       <td class="amount">${formatMoney(g.principal)}</td>
       <td class="amount">${formatMoney(g.interest)}</td>
       <td class="amount"><strong>${formatMoney(g.total)}</strong></td>
@@ -156,6 +154,33 @@ function renderTable(tbody, groups){
       <td class="amount ${g.unpaid > 0 ? 'overdue' : ''}">${formatMoney(g.unpaid)}</td>
     `;
     tbody.appendChild(tr);
+
+    const itemRows = g.items.map(l => {
+      const itemInterest = l.principal * (rate / 100);
+      const itemTotal = l.principal + itemInterest;
+      const itemPaid = l.paid ? itemTotal : 0;
+      const itemUnpaid = itemTotal - itemPaid;
+      const itemRow = document.createElement('tr');
+      itemRow.className = 'detail-row';
+      itemRow.style.display = 'none';
+      itemRow.innerHTML = `
+        <td>${l.name || ''} <span class="muted">${l.loanDate || ''}</span></td>
+        <td>1</td>
+        <td class="amount">${formatMoney(l.principal)}</td>
+        <td class="amount">${formatMoney(itemInterest)}</td>
+        <td class="amount"><strong>${formatMoney(itemTotal)}</strong></td>
+        <td class="amount">${formatMoney(itemPaid)}</td>
+        <td class="amount ${itemUnpaid > 0 ? 'overdue' : ''}">${formatMoney(itemUnpaid)}</td>
+      `;
+      tbody.appendChild(itemRow);
+      return itemRow;
+    });
+
+    tr.querySelector('.count-toggle').addEventListener('click', () => {
+      const open = itemRows[0] && itemRows[0].style.display !== 'none';
+      itemRows.forEach(row => { row.style.display = open ? 'none' : ''; });
+      tr.querySelector('.caret').textContent = open ? '▸' : '▾';
+    });
   });
 }
 

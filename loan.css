@@ -465,6 +465,30 @@ h1{
 
 .loan-table .amount{ text-align:right; font-variant-numeric:tabular-nums; }
 
+.count-toggle{
+  appearance:none;
+  border:none;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:0.3rem;
+  padding:0.15rem 0.4rem;
+  border-radius:6px;
+}
+.count-toggle:hover{ background:rgba(169,124,20,0.14); }
+.count-toggle .caret{ font-size:0.7em; color:var(--muted); }
+
+.detail-row td{
+  background:rgba(90,70,20,0.03);
+  font-size:0.82rem;
+  color:var(--muted);
+}
+.detail-row:first-of-type td:first-child{ padding-top:0.7rem; }
+.detail-row td .muted{ color:var(--muted); font-size:0.9em; }
+
 .status-btn{
   appearance:none;
   border-radius:999px;
