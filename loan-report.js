@@ -128,10 +128,12 @@ function computeGroups(filtered, keyFn){
     .map(([key, items]) => {
       const principal = items.reduce((s, l) => s + l.principal, 0);
       const interest = items.reduce((s, l) => s + l.principal * (rate / 100), 0);
-      const total = principal + interest;
       const paid = items.filter(l => l.paid).reduce((s, l) => s + loanTotal(l), 0);
+      const paidInterest = items.filter(l => l.paid).reduce((s, l) => s + l.principal * (rate / 100), 0);
       const outstandingPrincipal = items.filter(l => !l.paid).reduce((s, l) => s + l.principal, 0);
-      return { key, count: items.length, principal, interest, total, paid, unpaid: total - paid, outstandingPrincipal, items };
+      const unpaidInterest = items.filter(l => !l.paid).reduce((s, l) => s + l.principal * (rate / 100), 0);
+      const total = outstandingPrincipal + paidInterest;
+      return { key, count: items.length, principal, interest, total, paid, unpaid: (principal + interest) - paid, outstandingPrincipal, paidInterest, unpaidInterest, items };
     })
     .sort((a, b) => b.key.localeCompare(a.key));
 }
@@ -149,7 +151,7 @@ function renderTable(tbody, groups){
       <td>${g.key}</td>
       <td><button type="button" class="count-toggle">${g.count} <span class="caret">▸</span></button></td>
       <td class="amount">${formatMoney(g.outstandingPrincipal)}</td>
-      <td class="amount">${formatMoney(g.interest)}</td>
+      <td class="amount">${formatMoney(g.unpaidInterest)}</td>
       <td class="amount"><strong>${formatMoney(g.total)}</strong></td>
       <td class="amount">${formatMoney(g.paid)}</td>
       <td class="amount ${g.unpaid > 0 ? 'overdue' : ''}">${formatMoney(g.unpaid)}</td>
@@ -183,8 +185,8 @@ function renderTable(tbody, groups){
     totalRow.innerHTML = `
       <td><strong>รวม</strong></td>
       <td>${g.count}</td>
-      <td class="amount"><strong>${formatMoney(g.principal)}</strong></td>
-      <td class="amount"><strong>${formatMoney(g.interest)}</strong></td>
+      <td class="amount"><strong>${formatMoney(g.outstandingPrincipal)}</strong></td>
+      <td class="amount"><strong>${formatMoney(g.paidInterest)}</strong></td>
       <td class="amount"><strong>${formatMoney(g.total)}</strong></td>
       <td class="amount"><strong>${formatMoney(g.paid)}</strong></td>
       <td class="amount ${g.unpaid > 0 ? 'overdue' : ''}"><strong>${formatMoney(g.unpaid)}</strong></td>
