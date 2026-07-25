@@ -76,6 +76,8 @@ const els = {
   sumDebt: document.getElementById('sumDebt'),
   sumPaid: document.getElementById('sumPaid'),
   sumRemaining: document.getElementById('sumRemaining'),
+  progressFill: document.getElementById('progressFill'),
+  progressPct: document.getElementById('progressPct'),
 };
 
 // Latest known debtAmount for a given item name — new entries for an
@@ -159,6 +161,10 @@ function renderSummary(rows){
   els.sumDebt.textContent = formatMoney(debtTotal);
   els.sumPaid.textContent = formatMoney(paidTotal);
   els.sumRemaining.textContent = formatMoney(remainingTotal);
+
+  const pct = debtTotal > 0 ? Math.min(100, Math.round((paidTotal / debtTotal) * 100)) : 0;
+  els.progressFill.style.width = pct + '%';
+  els.progressPct.textContent = pct + '%';
 }
 
 function populateDatalist(){
@@ -173,21 +179,24 @@ function render(){
 
   els.debtBody.innerHTML = '';
   if (rows.length === 0){
-    els.debtBody.innerHTML = '<tr class="empty-row"><td colspan="9">ยังไม่มีรายการ เพิ่มรายการแรกด้านบนได้เลย</td></tr>';
+    els.debtBody.innerHTML = '<tr class="empty-row"><td colspan="10">ยังไม่มีรายการ เพิ่มรายการแรกด้านบนได้เลย</td></tr>';
     return;
   }
 
   rows.forEach((r, i) => {
+    const isSettled = r.remaining <= 0;
     const tr = document.createElement('tr');
+    if (isSettled) tr.classList.add('paid-row');
     tr.innerHTML = `
       <td>${rows.length - i}</td>
-      <td>${r.name}</td>
+      <td><strong>${r.name}</strong></td>
       <td class="amount">${formatMoney(r.debtAmount)}</td>
       <td>${formatDate(r.payDate)}</td>
       <td>${monthLabel(r.payDate)}</td>
       <td class="amount">${formatMoney(r.payAmount)}</td>
       <td class="amount">${formatMoney(r.cumulativePaid)}</td>
       <td class="amount ${r.remaining > 0 ? 'overdue' : ''}">${formatMoney(r.remaining)}</td>
+      <td><span class="status-pill ${isSettled ? 'paid' : 'unpaid'}">${isSettled ? 'ชำระครบแล้ว' : 'คงค้าง'}</span></td>
       <td><button type="button" class="row-delete" title="ลบรายการนี้">✕</button></td>
     `;
     tr.querySelector('.row-delete').addEventListener('click', () => deleteEntry(r.id));

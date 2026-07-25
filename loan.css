@@ -305,6 +305,9 @@ h1{
 }
 .date-input:focus{ outline:none; border-color:var(--gold); }
 
+.date-field-narrow{ width:9.5rem; }
+.date-field-narrow .date-input{ width:100%; padding-right:0.3rem; }
+
 .overdue{ color:var(--bad); font-weight:600; }
 
 .due-soon td{ background:rgba(169,124,20,0.14); }
@@ -495,6 +498,43 @@ h1{
   border-top:1px solid var(--felt-line);
   background:rgba(169,124,20,0.08);
   padding-bottom:0.7rem;
+}
+
+.status-pill{
+  border-radius:999px;
+  padding:0.2rem 0.6rem;
+  font-size:0.72rem;
+  font-weight:600;
+  white-space:nowrap;
+}
+.status-pill.paid{ background:rgba(47,125,79,0.14); color:var(--good); }
+.status-pill.unpaid{ background:rgba(168,57,63,0.12); color:var(--bad); }
+
+.progress-row{
+  display:flex;
+  align-items:center;
+  gap:0.7rem;
+  margin-top:1rem;
+}
+.progress-track{
+  flex:1;
+  height:8px;
+  border-radius:999px;
+  background:rgba(90,70,20,0.1);
+  overflow:hidden;
+}
+.progress-fill{
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg, var(--gold-soft), var(--good));
+  transition:width 0.25s ease;
+}
+.progress-pct{
+  font-size:0.8rem;
+  font-weight:600;
+  color:var(--gold-soft);
+  min-width:2.6rem;
+  text-align:right;
 }
 
 .status-btn{
