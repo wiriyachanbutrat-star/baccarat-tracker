@@ -73,11 +73,7 @@ const els = {
   errorLine: document.getElementById('errorLine'),
   debtBody: document.getElementById('debtBody'),
   emptyRow: document.getElementById('emptyRow'),
-  sumDebt: document.getElementById('sumDebt'),
-  sumPaid: document.getElementById('sumPaid'),
-  sumRemaining: document.getElementById('sumRemaining'),
-  progressFill: document.getElementById('progressFill'),
-  progressPct: document.getElementById('progressPct'),
+  summaryByItemBody: document.getElementById('summaryByItemBody'),
 };
 
 // Latest known debtAmount for a given item name — new entries for an
@@ -152,19 +148,36 @@ function renderSummary(rows){
       latestByName.set(r.name, r);
     }
   });
-  let debtTotal = 0, paidTotal = 0, remainingTotal = 0;
-  latestByName.forEach(r => {
-    debtTotal += r.debtAmount;
-    paidTotal += r.cumulativePaid;
-    remainingTotal += r.remaining;
-  });
-  els.sumDebt.textContent = formatMoney(debtTotal);
-  els.sumPaid.textContent = formatMoney(paidTotal);
-  els.sumRemaining.textContent = formatMoney(remainingTotal);
+  renderSummaryByItem(latestByName);
+}
 
-  const pct = debtTotal > 0 ? Math.min(100, Math.round((paidTotal / debtTotal) * 100)) : 0;
-  els.progressFill.style.width = pct + '%';
-  els.progressPct.textContent = pct + '%';
+function renderSummaryByItem(latestByName){
+  const items = [...latestByName.values()].sort((a, b) => a.name.localeCompare(b.name, 'th'));
+  if (items.length === 0){
+    els.summaryByItemBody.innerHTML = '<tr class="empty-row"><td colspan="6">ยังไม่มีรายการ</td></tr>';
+    return;
+  }
+  els.summaryByItemBody.innerHTML = items.map(r => {
+    const isSettled = r.remaining <= 0;
+    const pct = r.debtAmount > 0 ? Math.min(100, Math.round((r.cumulativePaid / r.debtAmount) * 100)) : 0;
+    return `
+      <tr>
+        <td><strong>${r.name}</strong></td>
+        <td class="amount">${formatMoney(r.debtAmount)}</td>
+        <td class="amount">${formatMoney(r.cumulativePaid)}</td>
+        <td class="amount ${r.remaining > 0 ? 'overdue' : ''}">${formatMoney(r.remaining)}</td>
+        <td>
+          <div class="progress-row">
+            <div class="progress-track">
+              <div class="progress-fill" style="width:${pct}%"></div>
+            </div>
+            <span class="progress-pct">${pct}%</span>
+          </div>
+        </td>
+        <td><span class="status-pill ${isSettled ? 'paid' : 'unpaid'}">${isSettled ? 'ชำระครบแล้ว' : 'คงค้าง'}</span></td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function populateDatalist(){
@@ -199,7 +212,11 @@ function render(){
       <td><span class="status-pill ${isSettled ? 'paid' : 'unpaid'}">${isSettled ? 'ชำระครบแล้ว' : 'คงค้าง'}</span></td>
       <td><button type="button" class="row-delete" title="ลบรายการนี้">✕</button></td>
     `;
-    tr.querySelector('.row-delete').addEventListener('click', () => deleteEntry(r.id));
+    tr.querySelector('.row-delete').addEventListener('click', () => {
+      const msg = `ลบรายการนี้?\n\nรายการ: ${r.name}\nวันที่จ่าย: ${formatDate(r.payDate)}\nจำนวนเงินจ่าย: ${formatMoney(r.payAmount)}`;
+      if (!confirm(msg)) return;
+      deleteEntry(r.id);
+    });
     els.debtBody.appendChild(tr);
   });
 }

@@ -44,25 +44,20 @@
 
       <section class="card summary-card">
         <h2 class="section-title">สรุปยอดรวม</h2>
-        <div class="summary-grid">
-          <div class="summary-tile">
-            <div class="lbl">จำนวนหนี้สินรวม</div>
-            <div class="val" id="sumDebt">฿0</div>
-          </div>
-          <div class="summary-tile good">
-            <div class="lbl">จ่ายไปแล้วรวม</div>
-            <div class="val" id="sumPaid">฿0</div>
-          </div>
-          <div class="summary-tile bad">
-            <div class="lbl">หนี้คงเหลือรวม</div>
-            <div class="val" id="sumRemaining">฿0</div>
-          </div>
-        </div>
-        <div class="progress-row">
-          <div class="progress-track">
-            <div class="progress-fill" id="progressFill" style="width:0%"></div>
-          </div>
-          <span class="progress-pct" id="progressPct">0%</span>
+        <div class="table-wrap">
+          <table class="loan-table">
+            <thead>
+              <tr>
+                <th>รายการ</th>
+                <th class="amount">จำนวนหนี้สิน</th>
+                <th class="amount">รวมจำนวนที่จ่ายหนี้</th>
+                <th class="amount">จำนวนหนี้คงเหลือ</th>
+                <th>ความคืบหน้า</th>
+                <th>สถานะ</th>
+              </tr>
+            </thead>
+            <tbody id="summaryByItemBody"></tbody>
+          </table>
         </div>
       </section>
 
@@ -77,12 +72,12 @@
               <tr>
                 <th>ลำดับ</th>
                 <th>รายการ</th>
-                <th>จำนวนหนี้สิน</th>
+                <th class="amount">จำนวนหนี้สิน</th>
                 <th>วันที่จ่าย</th>
                 <th>เดือน</th>
-                <th>จำนวนเงินจ่าย</th>
-                <th>รวมจำนวนที่จ่ายหนี้</th>
-                <th>จำนวนหนี้คงเหลือ</th>
+                <th class="amount">จำนวนเงินจ่าย</th>
+                <th class="amount">รวมจำนวนที่จ่ายหนี้</th>
+                <th class="amount">จำนวนหนี้คงเหลือ</th>
                 <th>สถานะ</th>
                 <th></th>
               </tr>
