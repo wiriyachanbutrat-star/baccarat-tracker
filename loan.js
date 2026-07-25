@@ -227,6 +227,7 @@ function render(){
 
       const tr = document.createElement('tr');
       if (isDueSoon) tr.classList.add('due-soon');
+      if (loan.paid) tr.classList.add('paid-row');
       tr.innerHTML = `
         <td>${idx + 1}</td>
         <td><input type="text" class="borrower-name-input" value="${loan.name.replace(/"/g, '&quot;')}"></td>

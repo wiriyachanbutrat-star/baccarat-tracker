@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ระบบจัดการหนี้สิน</title>
+  <link rel="stylesheet" href="loan.css">
+</head>
+<body>
+  <div class="table-frame">
+    <header>
+      <p class="eyebrow">Debt Tracker</p>
+      <h1>ระบบจัดการหนี้สิน</h1>
+      <div class="nav-row">
+        <a class="nav-link" href="index.html">← ไปหน้าเว็บบาคาร่า</a>
+        <a class="nav-link" href="loan.html">ระบบเงินกู้ →</a>
+        <a class="nav-link" href="loan-report.html">ดูรายงานเงินกู้ →</a>
+      </div>
+    </header>
+
+    <div class="layout">
+      <p class="error-line" id="errorLine"></p>
+
+      <section class="card">
+        <h2 class="section-title">เพิ่มรายการชำระหนี้</h2>
+        <div class="add-row">
+          <input type="text" id="debtName" class="text-input" placeholder="รายการหนี้สิน" list="debtNameList" autocomplete="off">
+          <datalist id="debtNameList"></datalist>
+          <div class="bet-input-wrap">
+            <span>฿</span>
+            <input type="number" id="debtAmount" min="0" step="1" placeholder="จำนวนหนี้สิน">
+          </div>
+          <label class="date-field">วันที่จ่าย
+            <input type="date" id="payDate" class="date-input">
+          </label>
+          <div class="bet-input-wrap">
+            <span>฿</span>
+            <input type="number" id="payAmount" min="0" step="1" placeholder="จำนวนเงินจ่าย">
+          </div>
+          <button id="btn-add" class="entry-btn add">เพิ่ม</button>
+        </div>
+        <p class="hint" id="debtHint"></p>
+      </section>
+
+      <section class="card summary-card">
+        <h2 class="section-title">สรุปยอดรวม</h2>
+        <div class="summary-grid">
+          <div class="summary-tile">
+            <div class="lbl">จำนวนหนี้สินรวม</div>
+            <div class="val" id="sumDebt">฿0</div>
+          </div>
+          <div class="summary-tile good">
+            <div class="lbl">จ่ายไปแล้วรวม</div>
+            <div class="val" id="sumPaid">฿0</div>
+          </div>
+          <div class="summary-tile bad">
+            <div class="lbl">หนี้คงเหลือรวม</div>
+            <div class="val" id="sumRemaining">฿0</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-title-row">
+          <h2 class="section-title" style="margin:0;flex:1;">รายการชำระหนี้</h2>
+          <button id="btn-clear" class="utility-btn small">ลบทั้งหมด</button>
+        </div>
+        <div class="table-wrap">
+          <table class="loan-table">
+            <thead>
+              <tr>
+                <th>ลำดับ</th>
+                <th>รายการ</th>
+                <th>จำนวนหนี้สิน</th>
+                <th>วันที่จ่าย</th>
+                <th>เดือน</th>
+                <th>จำนวนเงินจ่าย</th>
+                <th>รวมจำนวนที่จ่ายหนี้</th>
+                <th>จำนวนหนี้คงเหลือ</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="debtBody">
+              <tr class="empty-row" id="emptyRow"><td colspan="9">ยังไม่มีรายการ เพิ่มรายการแรกด้านบนได้เลย</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script src="debt.js"></script>
+</body>
+</html>
