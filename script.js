@@ -13,6 +13,12 @@ const WARMUP_ROUNDS = 4;
 // where those percentages stop swinging wildly round to round.
 const ROOM_FIT_MIN_ROUNDS = 20;
 
+// How many of the most recent decided bets to look back over when judging
+// "ตามระบบ" (with the system) vs "ตรงข้ามระบบ" (against the system) — see
+// computeSystemAlignment() below.
+const SYSTEM_ALIGN_WINDOW = 10;
+const SYSTEM_ALIGN_MIN_ROUNDS = 5;
+
 // Standard 8-deck baccarat probabilities (widely published reference odds).
 // House edge per 1 unit staked, after Banker's 5% commission on wins.
 const ODDS = {
@@ -531,15 +537,63 @@ function getSuggestion(winners){
   return { pick: null, confidence: null, strength: null, reasonText: 'ไม่มีเค้าที่ชัดเจนพอ (Mixed) ระบบจะรอจนกว่าจะมั่นใจ' };
 }
 
-// Plain pass-through to getSuggestion — kept as its own function (rather
-// than replacing every call site) since simulateMoney/renderRecommendation/
-// renderGameFix/evaluateRoomFit all call this name. Previously flipped the
-// pick against recent stats or a loss streak ("แทงสวนแพทเทิร์น"); removed
-// on request. `faded` stays in the return shape for compatibility but is
-// now always false.
+// Replays the raw pattern engine (getSuggestion, never the faded pick) over
+// every round from WARMUP_ROUNDS onward — same rounds simulateMoney would
+// have bet on — and asks whether the SYSTEM_ALIGN_WINDOW most recent of
+// those calls actually matched the real result ("ตามระบบ") or mostly missed
+// it ("ตรงข้ามระบบ"). Always measured against the raw engine, never against
+// whatever getFinalSuggestion ends up betting, so the fade decision below
+// has a stable, non-circular signal to react to instead of chasing its own
+// output.
+function computeSystemAlignment(winners){
+  const hits = [];
+  for (let i = WARMUP_ROUNDS; i < winners.length; i++){
+    const prior = winners.slice(0, i);
+    const actual = winners[i];
+    if (actual === 'T') continue;
+    const raw = getSuggestion(prior);
+    if (!raw.pick) continue;
+    hits.push(raw.pick === actual);
+  }
+
+  const recent = hits.slice(-SYSTEM_ALIGN_WINDOW);
+  if (recent.length < SYSTEM_ALIGN_MIN_ROUNDS){
+    return { verdict: 'pending', remaining: SYSTEM_ALIGN_MIN_ROUNDS - recent.length };
+  }
+
+  const withSystem = recent.filter(Boolean).length;
+  const total = recent.length;
+  const pct = Math.round((withSystem / total) * 100);
+
+  let verdict;
+  if (pct >= 60) verdict = 'with';
+  else if (pct <= 40) verdict = 'against';
+  else verdict = 'mixed';
+
+  return { verdict, pct, total, withSystem };
+}
+
+// Applies the vote from computeSystemAlignment(): when "ตรงข้ามระบบ" has
+// clearly been winning more of the recent decided bets than "ตามระบบ", the
+// actual recommendation flips to the opposite side instead of the raw
+// pattern pick. This is the one place the fade decision affects real
+// betting (simulateMoney, the recommend card, room-fit, game-fix all read
+// through this). `faded` marks when that flip happened.
 function getFinalSuggestion(winners, consecutiveLosses){
   const sugg = getSuggestion(winners);
-  return { ...sugg, faded: false };
+  if (!sugg.pick) return { ...sugg, faded: false };
+
+  const align = computeSystemAlignment(winners);
+  if (align.verdict !== 'against') return { ...sugg, faded: false };
+
+  const flipped = sugg.pick === 'P' ? 'B' : 'P';
+  return {
+    pick: flipped,
+    confidence: sugg.confidence,
+    strength: sugg.strength,
+    reasonText: `${sugg.reasonText} — แต่ ${align.total} ตาล่าสุดออก "สวนระบบ" มากกว่า (${align.withSystem}/${align.total} ตรงตามระบบ) จึงสลับคำแนะนำมาเป็นฝั่ง ${sideName(flipped)}`,
+    faded: true,
+  };
 }
 
 // Replays the history: the first WARMUP_ROUNDS results are observation only
@@ -944,41 +998,11 @@ function renderGameFix(sim){
   els.gameFixText.textContent = fix.text;
 }
 
-// How many of the most recent decided bets to look back over when judging
-// "ตามระบบ" (with the system) vs "ตรงข้ามระบบ" (against the system).
-const SYSTEM_ALIGN_WINDOW = 10;
-const SYSTEM_ALIGN_MIN_ROUNDS = 5;
-
-// Looks at sim.log (already has, per round, what the pattern picked vs what
-// actually landed) and asks a purely descriptive question: over the recent
-// window, has the table been landing on the system's picks ("ตามระบบ") or
-// mostly landing on the opposite side ("ตรงข้ามระบบ")? This does not change
-// the next pick — getSuggestion() never fades itself — it's just a read on
-// whether this table has recently been agreeing or disagreeing with the
-// pattern engine, same disclaimer as everywhere else: independent hands,
-// no memory, this is a look backward not a prediction forward.
-function evaluateSystemAlignment(sim){
-  const decided = sim.log.filter(e => e.outcome !== 'push');
-  const recent = decided.slice(-SYSTEM_ALIGN_WINDOW);
-  if (recent.length < SYSTEM_ALIGN_MIN_ROUNDS){
-    return { verdict: 'pending', remaining: SYSTEM_ALIGN_MIN_ROUNDS - recent.length };
-  }
-
-  const withSystem = recent.filter(e => e.outcome === 'win').length;
-  const total = recent.length;
-  const pct = Math.round((withSystem / total) * 100);
-
-  let verdict;
-  if (pct >= 60) verdict = 'with';
-  else if (pct <= 40) verdict = 'against';
-  else verdict = 'mixed';
-
-  return { verdict, pct, total, withSystem };
-}
-
-function renderSystemAlignment(sim){
+// Purely descriptive readout of computeSystemAlignment() — same numbers
+// getFinalSuggestion() itself acts on, just surfaced as text.
+function renderSystemAlignment(winners){
   const line = els.systemAlignLine;
-  const align = evaluateSystemAlignment(sim);
+  const align = computeSystemAlignment(winners);
 
   if (align.verdict === 'pending'){
     line.className = 'system-align-line';
@@ -990,7 +1014,7 @@ function renderSystemAlignment(sim){
 
   const LABELS = {
     with: `ตามระบบ — ${align.withSystem}/${align.total} ตาล่าสุดออกตรงกับที่ระบบทาย (${align.pct}%)`,
-    against: `สวนระบบ — ออกตรงกับที่ระบบทายแค่ ${align.withSystem}/${align.total} ตาล่าสุด (${align.pct}%) ผลส่วนใหญ่ออกฝั่งตรงข้าม`,
+    against: `สวนระบบ — ออกตรงกับที่ระบบทายแค่ ${align.withSystem}/${align.total} ตาล่าสุด (${align.pct}%) ผลส่วนใหญ่ออกฝั่งตรงข้าม (คำแนะนำสลับฝั่งให้แล้ว)`,
     mixed: `ก้ำกึ่ง — ${align.withSystem}/${align.total} ตาล่าสุดตรงกับระบบ (${align.pct}%) ยังไม่ชัดว่าตามหรือสวน`,
   };
   line.className = 'system-align-line ' + align.verdict;
@@ -998,18 +1022,18 @@ function renderSystemAlignment(sim){
 }
 
 // Two-way "vote" between the same recent window used by
-// evaluateSystemAlignment: following the pattern engine's picks as-is
+// computeSystemAlignment: following the raw pattern engine's picks as-is
 // ("ตามระบบ") vs betting the opposite side every time ("สวนระบบ"). Whichever
 // approach would have actually won more of the recent decided bets is
-// flagged as the one worth playing right now — purely a look backward at
-// which of the two mirrored strategies has been landing, not a claim that
-// either one changes the game's real odds going forward.
-function renderSystemVote(sim){
-  const align = evaluateSystemAlignment(sim);
-  const winners = rounds.map(x => x.winner);
-  const sugg = getFinalSuggestion(winners, sim.consecutiveLosses);
-  const followSide = sugg.pick ? sideName(sugg.pick) : null;
-  const fadeSide = sugg.pick ? sideName(sugg.pick === 'P' ? 'B' : 'P') : null;
+// flagged as the one worth playing right now. When "สวนระบบ" is the clear
+// winner, getFinalSuggestion() has already flipped the live recommendation
+// to match — this box is what explains why the chip/call above just
+// switched sides.
+function renderSystemVote(winners){
+  const align = computeSystemAlignment(winners);
+  const raw = getSuggestion(winners);
+  const followSide = raw.pick ? sideName(raw.pick) : null;
+  const fadeSide = raw.pick ? sideName(raw.pick === 'P' ? 'B' : 'P') : null;
 
   els.voteFollowSide.textContent = followSide ? `ตานี้: ${followSide}` : '';
   els.voteFadeSide.textContent = fadeSide ? `ตานี้: ${fadeSide}` : '';
@@ -1036,11 +1060,11 @@ function renderSystemVote(sim){
   els.voteFadeChip.className = 'vote-chip' + (fadeWins ? ' winner' : '');
 
   if (followWins){
-    els.systemVoteText.textContent = `ช่วง ${align.total} ตาล่าสุด "ตามระบบ" ชนะบ่อยกว่า (${followPct}% ต่อ ${fadePct}%) — เล่นตามที่ระบบทายต่อไป`;
+    els.systemVoteText.textContent = `ช่วง ${align.total} ตาล่าสุด "ตามระบบ" ชนะบ่อยกว่า (${followPct}% ต่อ ${fadePct}%) — คำแนะนำด้านบนใช้ฝั่งที่ระบบทายตรงๆ`;
   } else if (fadeWins){
-    els.systemVoteText.textContent = `ช่วง ${align.total} ตาล่าสุด "สวนระบบ" ชนะบ่อยกว่า (${fadePct}% ต่อ ${followPct}%) — ถ้าจะเล่นต่อ ควรพิจารณาแทงสวนฝั่งที่ระบบทาย`;
+    els.systemVoteText.textContent = `ช่วง ${align.total} ตาล่าสุด "สวนระบบ" ชนะบ่อยกว่า (${fadePct}% ต่อ ${followPct}%) — คำแนะนำด้านบนสลับมาเป็นฝั่งตรงข้ามที่ระบบทายให้แล้ว`;
   } else {
-    els.systemVoteText.textContent = `ช่วง ${align.total} ตาล่าสุดสูสีกัน (${followPct}% ต่อ ${fadePct}%) ยังไม่มีฝั่งไหนชนะชัดเจน`;
+    els.systemVoteText.textContent = `ช่วง ${align.total} ตาล่าสุดสูสีกัน (${followPct}% ต่อ ${fadePct}%) ยังไม่มีฝั่งไหนชนะชัดเจน — คำแนะนำด้านบนยังใช้ฝั่งที่ระบบทายตรงๆ`;
   }
 }
 
@@ -1236,8 +1260,8 @@ function updateUI(){
   renderRecommendation(sim, baseBet);
   renderGameFix(sim);
   renderTieLine();
-  renderSystemAlignment(sim);
-  renderSystemVote(sim);
+  renderSystemAlignment(rounds.map(x => x.winner));
+  renderSystemVote(rounds.map(x => x.winner));
   renderMoney(sim);
   const fit = evaluateRoomFit(sim.consecutiveLosses);
   renderTableStatus(sim, baseBet, fit.verdict);

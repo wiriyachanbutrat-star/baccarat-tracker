@@ -183,15 +183,15 @@ h1{
 /* Recommend card shows only the call + bet line by default — the reasoning,
    tie-gap note, room-checklist, and odd-even read stay in the DOM
    (script.js still updates them without erroring) but are hidden from view.
-   #gameFix stays visible: it surfaces the urgent re-analysis alert after 2
-   straight losing steps. .status-stack (table health + room-fit) is shown
-   too -- it's the bankroll stop-loss / "switch rooms" warning, the one part
-   of this app that actually protects money rather than guessing sides, so
-   it needs to stay visible even when everything else is trimmed down. */
+   #gameFix (urgent re-analysis alert) and .status-stack (table health +
+   room-fit) were also hidden per request — they still update in the DOM,
+   just not shown, since they made the merged recommend card too tall/busy. */
 #suggest-reason,
 #tieLine,
 #oddEvenBlock,
-.room-checklist-details{
+.room-checklist-details,
+#gameFix,
+.status-stack{
   display:none !important;
 }
 
@@ -625,15 +625,34 @@ h1{
 }
 .entry-btn.player .dot{background:var(--player);}
 .entry-btn.banker .dot{background:var(--banker);}
-.entry-btn.tie .dot{background:var(--tie);}
+.entry-btn.tie .dot{background:#3fb968;}
 
-.entry-btn:hover{transform:translateY(-2px); background:rgba(0,0,0,0.28);}
+/* Each entry button gets a standing-out color look (border + tinted
+   background + colored text), not just a colored dot, so Player/Banker/Tie
+   all read clearly apart from each other at rest — not only on hover. */
+.entry-btn.player{
+  border-color:var(--player);
+  background:rgba(79,134,192,0.14);
+  color:var(--player-soft);
+}
+.entry-btn.banker{
+  border-color:var(--banker);
+  background:rgba(193,85,90,0.14);
+  color:var(--banker-soft);
+}
+.entry-btn.tie{
+  border-color:#3fb968;
+  background:rgba(63,185,104,0.14);
+  color:#7be3a0;
+}
+
+.entry-btn:hover{transform:translateY(-2px);}
 .entry-btn:active{transform:translateY(0);}
 .entry-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
 
-.entry-btn.player:hover{box-shadow:0 6px 16px rgba(79,134,192,0.3);}
-.entry-btn.banker:hover{box-shadow:0 6px 16px rgba(193,85,90,0.3);}
-.entry-btn.tie:hover{box-shadow:0 6px 16px rgba(95,174,130,0.3);}
+.entry-btn.player:hover{background:rgba(79,134,192,0.24); box-shadow:0 6px 16px rgba(79,134,192,0.35);}
+.entry-btn.banker:hover{background:rgba(193,85,90,0.24); box-shadow:0 6px 16px rgba(193,85,90,0.35);}
+.entry-btn.tie:hover{background:rgba(63,185,104,0.24); box-shadow:0 6px 16px rgba(63,185,104,0.35);}
 
 
 .key-hint{
