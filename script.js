@@ -64,6 +64,14 @@ const els = {
   roomFitGood: document.getElementById('roomFitGood'),
   roomFitBad: document.getElementById('roomFitBad'),
   tieStreakText: document.getElementById('tieStreakText'),
+  systemAlignLine: document.getElementById('systemAlignLine'),
+  voteFollowChip: document.getElementById('voteFollowChip'),
+  voteFollowPct: document.getElementById('voteFollowPct'),
+  voteFollowSide: document.getElementById('voteFollowSide'),
+  voteFadeChip: document.getElementById('voteFadeChip'),
+  voteFadePct: document.getElementById('voteFadePct'),
+  voteFadeSide: document.getElementById('voteFadeSide'),
+  systemVoteText: document.getElementById('systemVoteText'),
   gameFix: document.getElementById('gameFix'),
   gameFixTitle: document.getElementById('gameFixTitle'),
   gameFixText: document.getElementById('gameFixText'),
@@ -936,6 +944,106 @@ function renderGameFix(sim){
   els.gameFixText.textContent = fix.text;
 }
 
+// How many of the most recent decided bets to look back over when judging
+// "ตามระบบ" (with the system) vs "ตรงข้ามระบบ" (against the system).
+const SYSTEM_ALIGN_WINDOW = 10;
+const SYSTEM_ALIGN_MIN_ROUNDS = 5;
+
+// Looks at sim.log (already has, per round, what the pattern picked vs what
+// actually landed) and asks a purely descriptive question: over the recent
+// window, has the table been landing on the system's picks ("ตามระบบ") or
+// mostly landing on the opposite side ("ตรงข้ามระบบ")? This does not change
+// the next pick — getSuggestion() never fades itself — it's just a read on
+// whether this table has recently been agreeing or disagreeing with the
+// pattern engine, same disclaimer as everywhere else: independent hands,
+// no memory, this is a look backward not a prediction forward.
+function evaluateSystemAlignment(sim){
+  const decided = sim.log.filter(e => e.outcome !== 'push');
+  const recent = decided.slice(-SYSTEM_ALIGN_WINDOW);
+  if (recent.length < SYSTEM_ALIGN_MIN_ROUNDS){
+    return { verdict: 'pending', remaining: SYSTEM_ALIGN_MIN_ROUNDS - recent.length };
+  }
+
+  const withSystem = recent.filter(e => e.outcome === 'win').length;
+  const total = recent.length;
+  const pct = Math.round((withSystem / total) * 100);
+
+  let verdict;
+  if (pct >= 60) verdict = 'with';
+  else if (pct <= 40) verdict = 'against';
+  else verdict = 'mixed';
+
+  return { verdict, pct, total, withSystem };
+}
+
+function renderSystemAlignment(sim){
+  const line = els.systemAlignLine;
+  const align = evaluateSystemAlignment(sim);
+
+  if (align.verdict === 'pending'){
+    line.className = 'system-align-line';
+    line.textContent = rounds.length < WARMUP_ROUNDS
+      ? 'ผลตามระบบ/สวนระบบ: รอเริ่มเดิมพันก่อน'
+      : `ผลตามระบบ/สวนระบบ: รอข้อมูลอีก ${align.remaining} ตาที่เดิมพันแล้ว`;
+    return;
+  }
+
+  const LABELS = {
+    with: `ตามระบบ — ${align.withSystem}/${align.total} ตาล่าสุดออกตรงกับที่ระบบทาย (${align.pct}%)`,
+    against: `สวนระบบ — ออกตรงกับที่ระบบทายแค่ ${align.withSystem}/${align.total} ตาล่าสุด (${align.pct}%) ผลส่วนใหญ่ออกฝั่งตรงข้าม`,
+    mixed: `ก้ำกึ่ง — ${align.withSystem}/${align.total} ตาล่าสุดตรงกับระบบ (${align.pct}%) ยังไม่ชัดว่าตามหรือสวน`,
+  };
+  line.className = 'system-align-line ' + align.verdict;
+  line.textContent = 'ผลตามระบบ/สวนระบบ: ' + LABELS[align.verdict];
+}
+
+// Two-way "vote" between the same recent window used by
+// evaluateSystemAlignment: following the pattern engine's picks as-is
+// ("ตามระบบ") vs betting the opposite side every time ("สวนระบบ"). Whichever
+// approach would have actually won more of the recent decided bets is
+// flagged as the one worth playing right now — purely a look backward at
+// which of the two mirrored strategies has been landing, not a claim that
+// either one changes the game's real odds going forward.
+function renderSystemVote(sim){
+  const align = evaluateSystemAlignment(sim);
+  const winners = rounds.map(x => x.winner);
+  const sugg = getFinalSuggestion(winners, sim.consecutiveLosses);
+  const followSide = sugg.pick ? sideName(sugg.pick) : null;
+  const fadeSide = sugg.pick ? sideName(sugg.pick === 'P' ? 'B' : 'P') : null;
+
+  els.voteFollowSide.textContent = followSide ? `ตานี้: ${followSide}` : '';
+  els.voteFadeSide.textContent = fadeSide ? `ตานี้: ${fadeSide}` : '';
+
+  if (align.verdict === 'pending'){
+    els.voteFollowPct.textContent = '—';
+    els.voteFadePct.textContent = '—';
+    els.voteFollowChip.className = 'vote-chip';
+    els.voteFadeChip.className = 'vote-chip';
+    els.systemVoteText.textContent = rounds.length < WARMUP_ROUNDS
+      ? 'รอเริ่มเดิมพันก่อนถึงจะโหวตได้'
+      : `รอข้อมูลอีก ${align.remaining} ตาที่เดิมพันแล้วก่อนจะโหวตได้`;
+    return;
+  }
+
+  const followPct = align.pct;
+  const fadePct = 100 - align.pct;
+  els.voteFollowPct.textContent = followPct + '%';
+  els.voteFadePct.textContent = fadePct + '%';
+
+  const followWins = followPct > fadePct;
+  const fadeWins = fadePct > followPct;
+  els.voteFollowChip.className = 'vote-chip' + (followWins ? ' winner' : '');
+  els.voteFadeChip.className = 'vote-chip' + (fadeWins ? ' winner' : '');
+
+  if (followWins){
+    els.systemVoteText.textContent = `ช่วง ${align.total} ตาล่าสุด "ตามระบบ" ชนะบ่อยกว่า (${followPct}% ต่อ ${fadePct}%) — เล่นตามที่ระบบทายต่อไป`;
+  } else if (fadeWins){
+    els.systemVoteText.textContent = `ช่วง ${align.total} ตาล่าสุด "สวนระบบ" ชนะบ่อยกว่า (${fadePct}% ต่อ ${followPct}%) — ถ้าจะเล่นต่อ ควรพิจารณาแทงสวนฝั่งที่ระบบทาย`;
+  } else {
+    els.systemVoteText.textContent = `ช่วง ${align.total} ตาล่าสุดสูสีกัน (${followPct}% ต่อ ${fadePct}%) ยังไม่มีฝั่งไหนชนะชัดเจน`;
+  }
+}
+
 function renderTieLine(){
   const winners = rounds.map(x => x.winner);
   if (winners.length === 0){
@@ -1128,6 +1236,8 @@ function updateUI(){
   renderRecommendation(sim, baseBet);
   renderGameFix(sim);
   renderTieLine();
+  renderSystemAlignment(sim);
+  renderSystemVote(sim);
   renderMoney(sim);
   const fit = evaluateRoomFit(sim.consecutiveLosses);
   renderTableStatus(sim, baseBet, fit.verdict);

@@ -106,6 +106,36 @@ h1{
   }
 }
 
+.top-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:1rem;
+}
+
+@media (min-width:820px){
+  .top-row{
+    grid-template-columns: 1fr 1.1fr;
+    align-items:start;
+  }
+}
+
+/* Recommend card is paired with Streak Analysis in .top-row, so it's
+   trimmed down to a compact stacked layout (chip above text) instead of
+   the wide side-by-side layout it'd otherwise use at desktop widths. */
+.recommend-card{ padding:0.9rem 1rem; }
+.top-row .recommend{
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  padding:0.9rem 1rem;
+  gap:0.6rem;
+}
+.top-row .recommend-text{ width:100%; }
+.top-row .side-chip{ width:60px; height:60px; }
+.top-row .side-chip .chip-label{ font-size:1.2rem; }
+.top-row .recommend-text .call{ font-size:1.2rem; }
+.top-row .recommend-meter-row{ justify-content:center; }
+
 /* Mobile: bigger tap targets, tighter spacing, chip stacked above the
    recommend text instead of squeezed beside it. */
 @media (max-width:819px){
@@ -391,6 +421,70 @@ h1{
   font-weight:600;
 }
 
+.system-align-line{
+  margin:0.3rem 0 0;
+  font-size:0.78rem;
+  color:var(--muted);
+}
+.system-align-line.with{ color:var(--good); }
+.system-align-line.against{ color:var(--bad); }
+.system-align-line.mixed{ color:var(--carry); }
+
+.system-vote{
+  margin-top:0.55rem;
+  padding:0.55rem 0.7rem;
+  border-radius:7px;
+  border:1px solid var(--felt-line);
+  background:rgba(255,255,255,0.03);
+}
+.system-vote-title{
+  margin:0 0 0.4rem;
+  font-size:0.74rem;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:0.03em;
+}
+.system-vote-row{
+  display:flex;
+  gap:0.5rem;
+}
+.vote-chip{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0.15rem;
+  padding:0.4rem 0.3rem;
+  border-radius:6px;
+  border:1px solid var(--felt-line);
+  opacity:0.6;
+}
+.vote-chip.winner{
+  opacity:1;
+  border-color:var(--good);
+  background:rgba(84,163,105,0.12);
+}
+.vote-chip .vote-name{
+  font-size:0.72rem;
+  color:var(--muted);
+}
+.vote-chip.winner .vote-name{ color:var(--cream); }
+.vote-chip .vote-pct{
+  font-family:Georgia,serif;
+  font-size:1.05rem;
+  font-weight:700;
+  color:var(--cream);
+}
+.vote-chip .vote-side{
+  font-size:0.68rem;
+  color:var(--gold-soft);
+}
+.system-vote-text{
+  margin:0.4rem 0 0;
+  font-size:0.76rem;
+  color:var(--muted);
+}
+
 .game-fix{
   margin-top:0.6rem;
   padding:0.6rem 0.8rem;
@@ -464,6 +558,34 @@ h1{
   align-items:center;
   gap:0.8rem;
   margin-bottom:1rem;
+}
+
+.section-subtitle{
+  font-family:Georgia,serif;
+  font-size:0.86rem;
+  letter-spacing:0.02em;
+  margin:0 0 0.5rem;
+  color:var(--cream);
+}
+
+.streak-analysis-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:1.2rem;
+}
+
+@media (min-width:820px){
+  .streak-analysis-grid{
+    grid-template-columns:1.1fr 1fr;
+    align-items:start;
+  }
+}
+
+.streak-analysis-col{
+  padding:0.9rem 1rem;
+  border-radius:10px;
+  border:1px solid var(--felt-line);
+  background:rgba(255,255,255,0.025);
 }
 
 .utility-btn.small{
