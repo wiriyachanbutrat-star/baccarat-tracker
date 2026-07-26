@@ -114,14 +114,15 @@ h1{
 
 @media (min-width:820px){
   .top-row{
-    grid-template-columns: 1fr 1.1fr;
+    grid-template-columns: 1.35fr 1fr;
     align-items:start;
   }
 }
 
-/* Recommend card is paired with Streak Analysis in .top-row, so it's
-   trimmed down to a compact stacked layout (chip above text) instead of
-   the wide side-by-side layout it'd otherwise use at desktop widths. */
+/* Recommend card is paired with Streak Analysis in .top-row and also holds
+   the entry buttons + roads now, so the recommend block itself stays a
+   compact stacked layout (chip above text) rather than the wide
+   side-by-side layout it'd otherwise use at desktop widths. */
 .recommend-card{ padding:0.9rem 1rem; }
 .top-row .recommend{
   flex-direction:column;
