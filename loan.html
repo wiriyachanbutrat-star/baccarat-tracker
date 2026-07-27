@@ -35,6 +35,20 @@
       </section>
 
       <section class="card">
+        <h2 class="section-title">แจ้งเตือนผ่าน LINE (Webhook)</h2>
+        <p class="hint">
+          เว็บนี้ไม่ได้ต่อกับ LINE โดยตรง (LINE Notify ปิดบริการไปแล้ว) — แต่จะยิง Webhook ไปยัง URL ด้านล่างอัตโนมัติ (วันละครั้งต่อรายการ)
+          เมื่อมีรายการใกล้ครบกำหนดชำระ (≤2 วัน) หรือเลยกำหนดแล้ว จากนั้นตั้งค่าฝั่ง Make.com หรือ Zapier ให้รับ Webhook นี้แล้วส่งต่อเข้า LINE Official Account (ผ่าน Messaging API) ให้เอง
+        </p>
+        <div class="add-row">
+          <input type="url" id="webhookUrl" class="text-input" placeholder="วาง Webhook URL จาก Make/Zapier ที่นี่">
+          <button id="btn-save-webhook" class="entry-btn add">บันทึก</button>
+          <button id="btn-test-webhook" class="utility-btn">ทดสอบส่ง</button>
+        </div>
+        <p class="hint" id="webhookStatus"></p>
+      </section>
+
+      <section class="card">
         <h2 class="section-title">เพิ่มผู้กู้ใหม่</h2>
         <div class="add-row">
           <input type="text" id="borrowerName" class="text-input" placeholder="ชื่อผู้กู้" list="borrowerList" autocomplete="off">

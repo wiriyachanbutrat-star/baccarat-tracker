@@ -85,6 +85,10 @@ const els = {
   sumPrincipal: document.getElementById('sumPrincipal'),
   sumInterest: document.getElementById('sumInterest'),
   sumUnpaid: document.getElementById('sumUnpaid'),
+  webhookUrl: document.getElementById('webhookUrl'),
+  btnSaveWebhook: document.getElementById('btn-save-webhook'),
+  btnTestWebhook: document.getElementById('btn-test-webhook'),
+  webhookStatus: document.getElementById('webhookStatus'),
 };
 
 function formatMoney(n){
@@ -287,6 +291,8 @@ function render(){
     els.dueSoonBanner.textContent = `⏰ ใกล้ครบกำหนดชำระภายใน 2 วัน: ${names}`;
     els.dueSoonBanner.hidden = false;
   }
+
+  maybeSendDueWebhooks();
 }
 
 // When the typed/selected name matches an existing borrower (case-
@@ -309,6 +315,100 @@ function updateBorrowerHint(){
     ? `ผู้กู้เดิม "${existing[0].name}" — มียอดค้างชำระอยู่แล้ว ${formatMoney(unpaidTotal)} (${existing.length} รายการ)`
     : `ผู้กู้เดิม "${existing[0].name}" — ชำระครบทุกยอดแล้ว (${paidCount} รายการที่ผ่านมา)`;
 }
+
+// --- Due-date webhook notifications ----------------------------------------
+// This page has no LINE integration of its own (LINE Notify, the old
+// no-server way to do this, shut down 2025-03-31). Instead it fires a plain
+// webhook POST to whatever URL the user pastes in — a Make.com/Zapier
+// scenario on the other end is what actually forwards it into a LINE
+// Official Account via the Messaging API. The webhook URL is a personal
+// setting, not shared loan data, so it lives in localStorage rather than
+// the Google Sheet backend.
+const WEBHOOK_URL_KEY = 'loanWebhookUrl';
+const WEBHOOK_NOTIFIED_KEY = 'loanWebhookNotifiedDates';
+
+function getWebhookUrl(){
+  return localStorage.getItem(WEBHOOK_URL_KEY) || '';
+}
+
+function getNotifiedMap(){
+  try { return JSON.parse(localStorage.getItem(WEBHOOK_NOTIFIED_KEY) || '{}'); }
+  catch (e){ return {}; }
+}
+
+function markNotifiedToday(loanId){
+  const map = getNotifiedMap();
+  map[loanId] = todayISO();
+  localStorage.setItem(WEBHOOK_NOTIFIED_KEY, JSON.stringify(map));
+}
+
+function sendWebhook(url, payload){
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+// Called once per render(). Only fires once per loan per calendar day
+// (tracked in localStorage) no matter how many times render() re-runs, so
+// editing a field or the debounced save doesn't spam repeat webhooks.
+function maybeSendDueWebhooks(){
+  const url = getWebhookUrl();
+  if (!url) return;
+
+  const today = todayISO();
+  const notified = getNotifiedMap();
+
+  state.loans.forEach(loan => {
+    if (loan.paid || !loan.dueDate) return;
+    if (notified[loan.id] === today) return;
+
+    const d = daysUntil(loan.dueDate);
+    const isOverdue = d < 0;
+    const isDueSoon = d >= 0 && d <= 2;
+    if (!isOverdue && !isDueSoon) return;
+
+    sendWebhook(url, {
+      event: isOverdue ? 'overdue' : 'due_soon',
+      borrower: loan.name,
+      principal: loan.principal,
+      dueDate: loan.dueDate,
+      daysLeft: d,
+      message: isOverdue
+        ? `⚠ ${loan.name} เลยกำหนดชำระแล้ว (ครบกำหนด ${formatDate(loan.dueDate)})`
+        : `⏰ ${loan.name} ใกล้ครบกำหนดชำระ (${formatDate(loan.dueDate)}, อีก ${d} วัน)`,
+    }).catch(() => {}); // best-effort -- a failed notification shouldn't block the UI
+
+    markNotifiedToday(loan.id);
+  });
+}
+
+els.webhookUrl.value = getWebhookUrl();
+
+els.btnSaveWebhook.addEventListener('click', () => {
+  const url = els.webhookUrl.value.trim();
+  localStorage.setItem(WEBHOOK_URL_KEY, url);
+  els.webhookStatus.textContent = url ? 'บันทึก Webhook URL แล้ว' : 'ล้าง Webhook URL แล้ว (ปิดการแจ้งเตือน)';
+});
+
+els.btnTestWebhook.addEventListener('click', async () => {
+  const url = els.webhookUrl.value.trim();
+  if (!url){
+    els.webhookStatus.textContent = 'กรุณาใส่ Webhook URL ก่อนทดสอบ';
+    return;
+  }
+  els.webhookStatus.textContent = 'กำลังส่งทดสอบ...';
+  try {
+    await sendWebhook(url, {
+      event: 'test',
+      message: '🔔 ทดสอบการแจ้งเตือนจากระบบบันทึกเงินกู้',
+    });
+    els.webhookStatus.textContent = 'ส่งคำขอทดสอบแล้ว — เช็คปลายทาง (Make/Zapier) ว่าได้รับหรือไม่';
+  } catch (err) {
+    els.webhookStatus.textContent = 'ส่งไม่สำเร็จ: ' + (err && err.message ? err.message : String(err));
+  }
+});
 
 els.btnAdd.addEventListener('click', addLoan);
 els.borrowerAmount.addEventListener('keydown', (e) => { if (e.key === 'Enter') addLoan(); });
