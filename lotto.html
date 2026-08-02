@@ -12,7 +12,7 @@
     <header>
       <p class="eyebrow">Lao Lottery Helper</p>
       <h1>คำนวณหวยลาว 4 ตัวตรง</h1>
-      <p class="lead">กรอกผลย้อนหลัง 10 งวดล่าสุด ระบบจะเทียบค่าเก่าทีละงวดหาแนวโน้มผลต่างของแต่ละหลัก แล้วคาดการณ์ค่าถัดไปให้ (ไม่ใช่การทำนายผลจริง — ดูหมายเหตุท้ายหน้า)</p>
+      
       <div class="nav-row">
         <a class="nav-link" href="index.html">← ไปหน้าเว็บบาคาร่า</a>
         <a class="nav-link" href="loan.html">ระบบบันทึกเงินกู้ →</a>
@@ -20,117 +20,113 @@
       </div>
     </header>
 
-    <div class="warning-banner">
-      ⚠️ หวยเป็นการสุ่มอิสระ แต่ละงวดไม่เกี่ยวข้องกัน — ตัวเลขบนหน้านี้คือสถิติจาก 10 งวดที่กรอก ใช้เพื่อความเพลิดเพลิน <strong>ไม่ใช่การพยากรณ์ที่แม่นยำกว่าการสุ่มเดา</strong>
-    </div>
-
     <div class="layout">
       <div class="col">
         <section class="card">
-          <h2 class="section-title">ผลย้อนหลัง 10 งวดล่าสุด</h2>
-          <p class="hint">กรอกจากงวดเก่าสุด (แถวที่ 1) ไปงวดล่าสุด (แถวที่ 10) เลข 4 หลัก เช่น 3452</p>
-          <div class="draw-rows" id="drawRows">
-            <div class="draw-row">
-              <span class="draw-label">งวดที่ 1 (เก่าสุด)</span>
-              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="0" placeholder="0000">
+          <h2 class="section-title">หวยช่อง 1</h2>
+          <p class="hint">กรอกเลข 6 หลัก</p>
+          <div class="draw-row">
+            <span class="draw-label">หวยช่อง 1</span>
+            <input type="text" inputmode="numeric" maxlength="6" class="draw-input" id="channel1" placeholder="000000">
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">แยกเลขแต่ละหลัก</h2>
+          <div class="freq-grid" id="channel1Digits">
+            <div class="freq-tile"><span class="freq-digit">—</span></div>
+            <div class="freq-tile"><span class="freq-digit">—</span></div>
+            <div class="freq-tile"><span class="freq-digit">—</span></div>
+            <div class="freq-tile"><span class="freq-digit">—</span></div>
+            <div class="freq-tile"><span class="freq-digit">—</span></div>
+            <div class="freq-tile"><span class="freq-digit">—</span></div>
+          </div>
+        </section>
+
+        <section class="card" hidden>
+          <h2 class="section-title">คำนวณผล 3 ตัว</h2>
+          <div class="result-row">
+            <div class="result-card" id="result3OldCard">
+              <p class="headline" id="result3Old">—</p>
             </div>
-            <div class="draw-row">
-              <span class="draw-label">งวดที่ 2</span>
-              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="1" placeholder="0000">
-            </div>
-            <div class="draw-row">
-              <span class="draw-label">งวดที่ 3</span>
-              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="2" placeholder="0000">
-            </div>
-            <div class="draw-row">
-              <span class="draw-label">งวดที่ 4</span>
-              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="3" placeholder="0000">
-            </div>
-            <div class="draw-row">
-              <span class="draw-label">งวดที่ 5</span>
-              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="4" placeholder="0000">
-            </div>
-            <div class="draw-row">
-              <span class="draw-label">งวดที่ 6</span>
-              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="5" placeholder="0000">
-            </div>
-            <div class="draw-row">
-              <span class="draw-label">งวดที่ 7</span>
-              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="6" placeholder="0000">
-            </div>
-            <div class="draw-row">
-              <span class="draw-label">งวดที่ 8</span>
-              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="7" placeholder="0000">
-            </div>
-            <div class="draw-row">
-              <span class="draw-label">งวดที่ 9</span>
-              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="8" placeholder="0000">
-            </div>
-            <div class="draw-row">
-              <span class="draw-label">งวดที่ 10 (ล่าสุด)</span>
-              <input type="text" inputmode="numeric" maxlength="4" class="draw-input" data-idx="9" placeholder="0000">
+            <div class="result-card" id="result3Card">
+              <p class="headline" id="result3">— — —</p>
             </div>
           </div>
-          <div class="utility-row">
-            <button id="btn-import" class="utility-btn">นำเข้าจาก Excel</button>
-            <input type="file" id="fileImport" accept=".xlsx,.xls,.csv" hidden>
+
+          <div class="result-row" style="margin-top:0.7rem;">
+            <div class="result-card" id="result3bOldCard">
+              <p class="headline" id="result3bOld">—</p>
+            </div>
+            <div class="result-card" id="result3bCard">
+              <p class="headline" id="result3b">—</p>
+            </div>
           </div>
-          <p class="hint" style="margin:0.5rem 0 0;">ไฟล์ต้องมี 2 คอลัมน์: คอลัมน์แรก "งวด" (1-10), คอลัมน์ที่สอง "เลข" (4 หลัก) เรียงจากงวดเก่าสุดไปล่าสุด</p>
-          <div class="utility-row" style="margin-top:0.8rem;">
-            <button id="btn-calc" class="entry-btn calc"><span class="dot"></span>คำนวณ</button>
-            <button id="btn-clear" class="utility-btn">ล้างทั้งหมด</button>
+
+          <div class="result-row" style="margin-top:0.7rem;">
+            <div class="result-card" id="result3cOldCard">
+              <p class="headline" id="result3cOld">—</p>
+            </div>
+            <div class="result-card" id="result3cCard">
+              <p class="headline" id="result3c">—</p>
+            </div>
           </div>
-          <p class="error-line" id="errorLine"></p>
+
         </section>
       </div>
 
       <div class="col">
-        <div class="result-card" id="resultCard">
-          <p class="label">เลขคาดการณ์จากแนวโน้มผลต่าง</p>
-          <p class="headline" id="trendNumber">— — — —</p>
-          <p class="reason" id="trendReason">กรอกผลย้อนหลังให้ครบ 10 งวดแล้วกดคำนวณ</p>
-        </div>
-
-        <section class="card">
-          <h2 class="section-title">รายละเอียดแนวโน้มแต่ละหลัก</h2>
-          <div class="trend-detail" id="trendDetail"></div>
-        </section>
-
-        <section class="card">
-          <h2 class="section-title">เลขทางเลือกอื่น</h2>
-          <div class="alt-grid">
-            <div class="alt-tile">
-              <div class="alt-label">เลขเด่นจากสถิติตำแหน่ง</div>
-              <div class="alt-number" id="modeNumber">—</div>
+        <section class="card" hidden>
+          <h2 class="section-title">คำนวณหวย 2 ตัว</h2>
+          <div class="result-row">
+            <div class="result-card" id="result2aOldCard">
+              <p class="headline" id="result2aOld">—</p>
             </div>
-            <div class="alt-tile">
-              <div class="alt-label">เลขเฉลี่ย</div>
-              <div class="alt-number" id="avgNumber">—</div>
-            </div>
-            <div class="alt-tile">
-              <div class="alt-label">เลขกลับของเลขแนวโน้ม</div>
-              <div class="alt-number" id="reverseNumber">—</div>
-            </div>
-            <div class="alt-tile">
-              <div class="alt-label">เลข Markov (ตามหลังบ่อยสุด)</div>
-              <div class="alt-number" id="markovNumber">—</div>
+            <div class="result-card" id="result2aCard">
+              <p class="headline" id="result2a">—</p>
             </div>
           </div>
-          <p class="hint" id="markovDetail" style="margin-top:0.6rem;"></p>
 
-          <h2 class="section-title" style="margin-top:1.2rem;">ความถี่ของตัวเลข 0-9</h2>
-          <div class="freq-grid" id="freqGrid"></div>
-
-          <div class="hot-cold">
-            <div>เลขฮอต (ออกบ่อย): <strong id="hotDigits">—</strong></div>
-            <div>เลขที่ยังไม่ออกเลย: <strong id="coldDigits">—</strong></div>
+          <div class="result-row" style="margin-top:0.7rem;">
+            <div class="result-card" id="result2bOldCard">
+              <p class="headline" id="result2bOld">—</p>
+            </div>
+            <div class="result-card" id="result2bCard">
+              <p class="headline" id="result2b">—</p>
+            </div>
+            <div class="result-card" id="result2bPlus2Card">
+              <p class="headline" id="result2bPlus2">—</p>
+            </div>
           </div>
+
         </section>
       </div>
     </div>
 
-    <p class="note">หวยลาวแต่ละงวดออกผลแบบสุ่มอิสระ ตัวเลขในงวดก่อนหน้าไม่ได้เพิ่มหรือลดโอกาสของงวดถัดไปจริง ๆ (แต่ละหลักมีโอกาสออก 1 ใน 10 เท่ากันเสมอ ไม่ว่าจะออกอะไรมาก่อน) เลขที่คำนวณได้บนหน้านี้เป็นเพียงสถิติของ 10 งวดที่กรอกไว้ ใช้เพื่อความเพลิดเพลินและติดตามข้อมูลเท่านั้น การเพิ่มจำนวนงวดช่วยให้สถิติความถี่นิ่งขึ้น แต่ไม่ได้ทำให้ทายแม่นขึ้นจริง ไม่ใช่การรับประกันผลงวดถัดไปและไม่มีวิธีคำนวณใดทำนายหวยได้แม่นยำกว่าการสุ่มเดา</p>
-  </div>
+    <section class="card">
+      <h2 class="section-title">ผลคำนวณ</h2>
+      <p class="label">ผล 3 ตัว</p>
+      <div class="combo-groups">
+        <div class="combo-group">
+          <div class="combo-grid" id="comboGroupOld"></div>
+        </div>
+        <div class="combo-group">
+          <div class="combo-grid" id="comboGroupNew"></div>
+        </div>
+      </div>
+
+      <p class="label" style="margin-top:0.7rem;">ผล 2 ตัว</p>
+      <div class="combo-groups">
+        <div class="combo-group">
+          <div class="combo-grid combo-grid-3" id="combo2GroupOld"></div>
+        </div>
+        <div class="combo-group">
+          <div class="combo-grid combo-grid-3" id="combo2GroupNew"></div>
+        </div>
+      </div>
+    </section>
+
+    
   <script src="lotto.js"></script>
 </body>
 </html>
