@@ -85,6 +85,7 @@ const els = {
   sumPrincipal: document.getElementById('sumPrincipal'),
   sumInterest: document.getElementById('sumInterest'),
   sumUnpaid: document.getElementById('sumUnpaid'),
+  sumInterestUnpaid: document.getElementById('sumInterestUnpaid'),
   webhookUrl: document.getElementById('webhookUrl'),
   btnSaveWebhook: document.getElementById('btn-save-webhook'),
   btnTestWebhook: document.getElementById('btn-test-webhook'),
@@ -272,9 +273,12 @@ function render(){
   const sumInterest = state.loans.filter(l => l.paid).reduce((s, l) => s + l.principal * (rate / 100), 0);
   const sumUnpaid = sumPrincipal + sumInterest;
 
-  els.sumPrincipal.textContent = formatMoney(sumUnpaid);
+  els.sumPrincipal.textContent = formatMoney(sumPrincipal + sumInterest);
   els.sumInterest.textContent = formatMoney(sumInterest);
   els.sumUnpaid.textContent = formatMoney(sumPrincipal);
+
+  const sumInterestUnpaid = unpaidLoans.reduce((s, l) => s + l.principal * (rate / 100), 0);
+  els.sumInterestUnpaid.textContent = formatMoney(sumInterestUnpaid);
 
   const dueSoonLoans = state.loans.filter(l => {
     if (l.paid || !l.dueDate) return false;
