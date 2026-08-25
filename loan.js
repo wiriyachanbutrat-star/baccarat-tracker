@@ -83,14 +83,18 @@ const els = {
   loanBody: document.getElementById('loanBody'),
   emptyRow: document.getElementById('emptyRow'),
   sumPrincipal: document.getElementById('sumPrincipal'),
-  sumInterest: document.getElementById('sumInterest'),
-  sumUnpaid: document.getElementById('sumUnpaid'),
+  sumPrincipalOnly: document.getElementById('sumPrincipalOnly'),
   sumInterestUnpaid: document.getElementById('sumInterestUnpaid'),
   webhookUrl: document.getElementById('webhookUrl'),
   btnSaveWebhook: document.getElementById('btn-save-webhook'),
   btnTestWebhook: document.getElementById('btn-test-webhook'),
   webhookStatus: document.getElementById('webhookStatus'),
+  tabSumPrincipalUnpaid: document.getElementById('tabSumPrincipalUnpaid'),
+  tabSumInterestUnpaid: document.getElementById('tabSumInterestUnpaid'),
+  unpaidTabs: document.querySelectorAll('.unpaid-tab'),
 };
+
+let statusFilter = 'all';
 
 function formatMoney(n){
   return '฿' + Math.round(n).toLocaleString('th-TH');
@@ -220,10 +224,15 @@ function render(){
 
   els.loanBody.innerHTML = '';
 
-  if (state.loans.length === 0){
+  const visibleLoans = statusFilter === 'unpaid' ? state.loans.filter(l => !l.paid) : state.loans;
+
+  if (visibleLoans.length === 0){
+    els.emptyRow.querySelector('td').textContent = state.loans.length === 0
+      ? 'ยังไม่มีรายการผู้กู้ เพิ่มรายการแรกด้านบนได้เลย'
+      : 'ไม่มีรายการค้างชำระ';
     els.loanBody.appendChild(els.emptyRow);
   } else {
-    state.loans.forEach((loan, idx) => {
+    visibleLoans.forEach((loan, idx) => {
       const interest = loan.principal * (rate / 100);
       const total = loan.principal + interest;
       const isOverdue = !loan.paid && loan.dueDate && loan.dueDate < todayISO();
@@ -270,15 +279,14 @@ function render(){
 
   const unpaidLoans = state.loans.filter(l => !l.paid);
   const sumPrincipal = unpaidLoans.reduce((s, l) => s + l.principal, 0);
-  const sumInterest = state.loans.filter(l => l.paid).reduce((s, l) => s + l.principal * (rate / 100), 0);
-  const sumUnpaid = sumPrincipal + sumInterest;
-
-  els.sumPrincipal.textContent = formatMoney(sumPrincipal + sumInterest);
-  els.sumInterest.textContent = formatMoney(sumInterest);
-  els.sumUnpaid.textContent = formatMoney(sumPrincipal);
-
   const sumInterestUnpaid = unpaidLoans.reduce((s, l) => s + l.principal * (rate / 100), 0);
+
+  els.sumPrincipal.textContent = formatMoney(sumPrincipal + sumInterestUnpaid);
+  els.sumPrincipalOnly.textContent = formatMoney(sumPrincipal);
   els.sumInterestUnpaid.textContent = formatMoney(sumInterestUnpaid);
+
+  els.tabSumPrincipalUnpaid.textContent = formatMoney(sumPrincipal);
+  els.tabSumInterestUnpaid.textContent = formatMoney(sumInterestUnpaid);
 
   const dueSoonLoans = state.loans.filter(l => {
     if (l.paid || !l.dueDate) return false;
@@ -420,6 +428,13 @@ els.borrowerName.addEventListener('keydown', (e) => { if (e.key === 'Enter') add
 els.borrowerName.addEventListener('input', updateBorrowerHint);
 els.btnClear.addEventListener('click', clearAll);
 els.rateInput.addEventListener('input', () => { render(); saveState(); });
+els.unpaidTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    statusFilter = statusFilter === 'unpaid' ? 'all' : 'unpaid';
+    els.unpaidTabs.forEach(t => t.classList.toggle('active', statusFilter === 'unpaid'));
+    render();
+  });
+});
 
 // initial — show a loading state while the Sheet data comes in
 els.emptyRow.querySelector('td').textContent = 'กำลังโหลดข้อมูลจาก Google Sheet...';

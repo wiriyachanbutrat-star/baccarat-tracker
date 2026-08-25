@@ -76,13 +76,15 @@
             <div class="lbl">ยอดรวมทั้งหมด</div>
             <div class="val" id="sumPrincipal">฿0</div>
           </div>
-          <div class="summary-tile">
-            <div class="lbl">ดอกเบี้ยรวม</div>
-            <div class="val" id="sumInterest">฿0</div>
-          </div>
+        </div>
+      </section>
+
+      <section class="card summary-card">
+        <h2 class="section-title">ค้างชำระ (เงินต้นอย่างเดียว)</h2>
+        <div class="summary-grid">
           <div class="summary-tile bad">
-            <div class="lbl">ค้างชำระ</div>
-            <div class="val" id="sumUnpaid">฿0</div>
+            <div class="lbl">เงินต้นค้างชำระ</div>
+            <div class="val" id="sumPrincipalOnly">฿0</div>
           </div>
         </div>
       </section>
@@ -101,6 +103,10 @@
         <div class="card-title-row">
           <h2 class="section-title" style="margin:0;flex:1;">รายชื่อผู้กู้</h2>
           <button id="btn-clear" class="utility-btn small">ลบทั้งหมด</button>
+        </div>
+        <div class="status-tabs">
+          <button class="status-tab unpaid-tab" data-filter="unpaid">เงินต้นค้างจ่าย <span class="tab-sum" id="tabSumPrincipalUnpaid">฿0</span></button>
+          <button class="status-tab unpaid-tab" data-filter="unpaid">ดอกเบี้ยค้างจ่าย <span class="tab-sum" id="tabSumInterestUnpaid">฿0</span></button>
         </div>
         <div class="table-wrap">
           <table class="loan-table">

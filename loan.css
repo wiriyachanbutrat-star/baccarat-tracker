@@ -408,6 +408,42 @@ h1{
 .utility-btn:hover{ background:rgba(90,70,20,0.06); color:var(--cream); }
 .utility-btn:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 
+.status-tabs{
+  display:flex;
+  gap:0.5rem;
+  margin:0.8rem 0;
+}
+.status-tab{
+  appearance:none;
+  border:1px solid var(--felt-line);
+  background:transparent;
+  color:var(--muted);
+  padding:0.4rem 0.9rem;
+  border-radius:999px;
+  font-size:0.8rem;
+  cursor:pointer;
+  transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.status-tab:hover{ background:rgba(90,70,20,0.06); color:var(--cream); }
+.status-tab.active{
+  border-color:var(--gold);
+  background:rgba(169,124,20,0.12);
+  color:var(--gold-soft);
+  font-weight:600;
+}
+.status-tab:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+.status-tab.info{
+  cursor:default;
+  border-color:var(--gold);
+  background:rgba(169,124,20,0.12);
+  color:var(--gold-soft);
+  font-weight:600;
+}
+.tab-sum{
+  font-size:0.72rem;
+  opacity:0.75;
+}
+
 .summary-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));
