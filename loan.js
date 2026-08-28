@@ -85,6 +85,9 @@ const els = {
   sumPrincipal: document.getElementById('sumPrincipal'),
   sumPrincipalOnly: document.getElementById('sumPrincipalOnly'),
   sumInterestUnpaid: document.getElementById('sumInterestUnpaid'),
+  sumPrincipalThisMonth: document.getElementById('sumPrincipalThisMonth'),
+  sumInterestThisMonth: document.getElementById('sumInterestThisMonth'),
+  currentMonthLabel: document.getElementById('currentMonthLabel'),
   webhookUrl: document.getElementById('webhookUrl'),
   btnSaveWebhook: document.getElementById('btn-save-webhook'),
   btnTestWebhook: document.getElementById('btn-test-webhook'),
@@ -284,6 +287,16 @@ function render(){
   els.sumPrincipal.textContent = formatMoney(sumPrincipal + sumInterestUnpaid);
   els.sumPrincipalOnly.textContent = formatMoney(sumPrincipal);
   els.sumInterestUnpaid.textContent = formatMoney(sumInterestUnpaid);
+
+  const currentMonthKey = todayISO().slice(0, 7); // 'YYYY-MM'
+  const thisMonthLoans = unpaidLoans.filter(l => l.dueDate && l.dueDate.slice(0, 7) === currentMonthKey);
+  const sumPrincipalThisMonth = thisMonthLoans.reduce((s, l) => s + l.principal, 0);
+  const sumInterestThisMonth = thisMonthLoans.reduce((s, l) => s + l.principal * (rate / 100), 0);
+  els.sumPrincipalThisMonth.textContent = formatMoney(sumPrincipalThisMonth);
+  els.sumInterestThisMonth.textContent = formatMoney(sumInterestThisMonth);
+  const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const now = new Date();
+  els.currentMonthLabel.textContent = `(${thaiMonths[now.getMonth()]} ${now.getFullYear() + 543})`;
 
   els.tabSumPrincipalUnpaid.textContent = formatMoney(sumPrincipal);
   els.tabSumInterestUnpaid.textContent = formatMoney(sumInterestUnpaid);

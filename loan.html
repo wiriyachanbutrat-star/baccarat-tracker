@@ -99,6 +99,21 @@
         </div>
       </section>
 
+      <section class="card summary-card">
+        <h2 class="section-title">ค้างชำระเดือนนี้ <span id="currentMonthLabel"></span></h2>
+        <p class="hint">นับเฉพาะรายการที่ยังไม่ชำระและครบกำหนดชำระในเดือนปัจจุบัน (ไม่รวมเดือนอื่น)</p>
+        <div class="summary-grid">
+          <div class="summary-tile bad">
+            <div class="lbl">เงินต้นค้างชำระเดือนนี้</div>
+            <div class="val" id="sumPrincipalThisMonth">฿0</div>
+          </div>
+          <div class="summary-tile bad">
+            <div class="lbl">ดอกเบี้ยค้างจ่ายเดือนนี้</div>
+            <div class="val" id="sumInterestThisMonth">฿0</div>
+          </div>
+        </div>
+      </section>
+
       <section class="card">
         <div class="card-title-row">
           <h2 class="section-title" style="margin:0;flex:1;">รายชื่อผู้กู้</h2>
