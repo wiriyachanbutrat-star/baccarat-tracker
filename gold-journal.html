@@ -419,9 +419,16 @@
         delBtn.addEventListener('click', async () => {
           delBtn.disabled = true;
           delBtn.textContent = 'กำลังลบ...';
-          await deleteEntryFromSheet(e.id);
-          await fetchAllEntries();
-          renderEntries();
+          try{
+            await deleteEntryFromSheet(e.id);
+            await fetchAllEntries();
+            renderEntries();
+          }catch(err){
+            console.error(err);
+            alert('ลบไม่สำเร็จ: ' + err.message);
+            delBtn.disabled = false;
+            delBtn.textContent = 'ลบรายการนี้';
+          }
         });
         list.appendChild(item);
       });
@@ -438,15 +445,20 @@
       addBtn.disabled = true;
       addBtn.textContent = 'กำลังบันทึก...';
 
-      await addEntryToSheet({ date: activeDateKey, pair, direction, lot, pnl, note });
-      await fetchAllEntries();
-
-      addBtn.disabled = false;
-      addBtn.textContent = '+ เพิ่มรายการ';
-      document.getElementById('fLot').value = '';
-      document.getElementById('fPnl').value = '';
-      document.getElementById('fNote').value = '';
-      renderEntries();
+      try{
+        await addEntryToSheet({ date: activeDateKey, pair, direction, lot, pnl, note });
+        await fetchAllEntries();
+        document.getElementById('fLot').value = '';
+        document.getElementById('fPnl').value = '';
+        document.getElementById('fNote').value = '';
+        renderEntries();
+      }catch(err){
+        console.error(err);
+        alert('บันทึกไม่สำเร็จ: ' + err.message);
+      }finally{
+        addBtn.disabled = false;
+        addBtn.textContent = '+ เพิ่มรายการ';
+      }
     });
 
     document.getElementById('closeModal').addEventListener('click', closeModal);
