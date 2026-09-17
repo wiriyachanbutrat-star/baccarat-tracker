@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>บันทึกการเทรดทอง - ปฏิทิน</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .gj-wrap{ max-width:1220px; margin:0 auto; }
+    .gj-toolbar{
+      display:flex; align-items:center; justify-content:space-between; gap:0.75rem;
+      flex-wrap:wrap; margin-bottom:1rem;
+    }
+    .gj-toolbar h2{
+      margin:0; font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+      font-size:1.4rem; color:var(--cream); min-width:180px; text-align:center;
+    }
+    .gj-nav-btn{
+      background:var(--felt-800); border:1px solid var(--felt-line); color:var(--cream);
+      border-radius:10px; padding:0.5rem 0.9rem; cursor:pointer; font-size:1rem;
+    }
+    .gj-nav-btn:hover{ border-color:var(--gold); color:var(--gold-soft); }
+    .gj-today-btn{
+      background:var(--felt-700); border:1px solid var(--gold); color:var(--gold-soft);
+      border-radius:10px; padding:0.5rem 0.9rem; cursor:pointer; font-size:0.85rem;
+    }
+    .gj-summary{
+      display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;
+    }
+    .gj-stat{
+      background:var(--felt-800); border:1px solid var(--felt-line); border-radius:var(--panel-radius);
+      padding:0.7rem 1rem; flex:1; min-width:130px; text-align:center;
+    }
+    .gj-stat .lbl{ font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; }
+    .gj-stat .val{ font-size:1.3rem; font-weight:600; margin-top:0.2rem; }
+    .gj-stat .val.pos{ color:var(--good); }
+    .gj-stat .val.neg{ color:var(--bad); }
+    .gj-calendar{
+      display:grid; grid-template-columns:repeat(7,1fr); gap:6px;
+    }
+    .gj-dow{
+      text-align:center; font-size:0.75rem; color:var(--muted); padding:0.3rem 0;
+      text-transform:uppercase; letter-spacing:0.05em;
+    }
+    .gj-cell{
+      background:var(--felt-800); border:1px solid var(--felt-line); border-radius:10px;
+      min-height:92px; padding:0.4rem; cursor:pointer; display:flex; flex-direction:column;
+      gap:0.25rem; transition:border-color 0.15s, background 0.15s;
+    }
+    .gj-cell:hover{ border-color:var(--gold); }
+    .gj-cell.empty{ background:transparent; border:none; cursor:default; }
+    .gj-cell.today{ border-color:var(--gold-soft); box-shadow:0 0 0 1px var(--gold-soft) inset; }
+    .gj-date{ font-size:0.85rem; font-weight:600; color:var(--cream); }
+    .gj-cell.empty .gj-date{ visibility:hidden; }
+    .gj-day-pnl{ font-size:0.85rem; font-weight:700; }
+    .gj-day-pnl.pos{ color:var(--good); }
+    .gj-day-pnl.neg{ color:var(--bad); }
+    .gj-day-count{ font-size:0.68rem; color:var(--muted); margin-top:auto; }
+
+    .gj-modal-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,0.55); display:flex;
+      align-items:center; justify-content:center; padding:1rem; z-index:50;
+    }
+    .gj-modal-backdrop[hidden]{ display:none; }
+    .gj-modal{
+      background:var(--felt-800); border:1px solid var(--felt-line); border-radius:var(--panel-radius);
+      width:100%; max-width:520px; max-height:88vh; overflow-y:auto; padding:1.2rem;
+      box-shadow:var(--shadow);
+    }
+    .gj-modal h3{ margin:0 0 0.9rem; color:var(--gold-soft); font-family:Georgia,serif; }
+    .gj-form-row{ display:flex; gap:0.6rem; margin-bottom:0.6rem; flex-wrap:wrap; }
+    .gj-form-row label{ font-size:0.75rem; color:var(--muted); display:block; margin-bottom:0.25rem; }
+    .gj-form-row .field{ flex:1; min-width:110px; }
+    .gj-form-row input, .gj-form-row select, .gj-form-row textarea{
+      width:100%; background:var(--felt-900); border:1px solid var(--felt-line); color:var(--cream);
+      border-radius:8px; padding:0.5rem 0.6rem; font-size:0.9rem; font-family:inherit;
+    }
+    .gj-form-row textarea{ resize:vertical; min-height:60px; }
+    .gj-modal-actions{ display:flex; justify-content:flex-end; gap:0.5rem; margin-top:0.4rem; }
+    .gj-btn{
+      border-radius:8px; padding:0.55rem 1rem; cursor:pointer; font-size:0.85rem; border:1px solid var(--felt-line);
+      background:var(--felt-900); color:var(--cream);
+    }
+    .gj-btn.primary{ background:var(--gold); border-color:var(--gold); color:var(--felt-900); font-weight:600; }
+    .gj-btn.danger{ background:transparent; border-color:var(--bad); color:var(--banker-soft); }
+    .gj-entries{ display:flex; flex-direction:column; gap:0.6rem; margin-top:0.8rem; }
+    .gj-entry{
+      background:var(--felt-900); border:1px solid var(--felt-line); border-radius:10px; padding:0.6rem 0.7rem;
+    }
+    .gj-entry-top{ display:flex; justify-content:space-between; align-items:center; gap:0.5rem; }
+    .gj-entry-pair{ font-weight:600; }
+    .gj-entry-pnl{ font-weight:700; }
+    .gj-entry-pnl.pos{ color:var(--good); }
+    .gj-entry-pnl.neg{ color:var(--bad); }
+    .gj-entry-meta{ font-size:0.75rem; color:var(--muted); margin-top:0.2rem; }
+    .gj-entry-note{ font-size:0.82rem; margin-top:0.3rem; white-space:pre-wrap; }
+    .gj-entry-del{ background:none; border:none; color:var(--bad); cursor:pointer; font-size:0.75rem; }
+  </style>
+</head>
+<body>
+  <div class="table-frame gj-wrap">
+    <header>
+      <p class="eyebrow">Gold Trading Journal</p>
+      <h1>บันทึกการเทรดทอง (ปฏิทิน)</h1>
+      <div class="nav-row">
+        <a class="nav-link" href="index.html">← หน้าหลัก</a>
+        <a class="nav-link" href="lotto.html">ระบบคำนวณเลขเดิน →</a>
+        <a class="nav-link" href="loan.html">ระบบบันทึกเงินกู้ →</a>
+        <a class="nav-link" href="debt.html">ระบบจัดการหนี้สิน →</a>
+      </div>
+    </header>
+
+    <div class="gj-summary">
+      <div class="gj-stat"><div class="lbl">กำไร/ขาดทุนเดือนนี้</div><div class="val" id="statMonthPnl">$0.00</div></div>
+      <div class="gj-stat"><div class="lbl">จำนวนตาเทรด</div><div class="val" id="statMonthCount">0</div></div>
+      <div class="gj-stat"><div class="lbl">อัตราชนะ</div><div class="val" id="statMonthWinrate">—</div></div>
+    </div>
+
+    <div class="gj-toolbar">
+      <button class="gj-nav-btn" id="prevMonth">←</button>
+      <h2 id="monthLabel">-</h2>
+      <button class="gj-nav-btn" id="nextMonth">→</button>
+      <button class="gj-today-btn" id="gotoToday">วันนี้</button>
+    </div>
+
+    <div class="gj-calendar" id="calendarGrid"></div>
+  </div>
+
+  <div class="gj-modal-backdrop" id="modalBackdrop" hidden>
+    <div class="gj-modal">
+      <h3 id="modalDateLabel">รายการวันที่</h3>
+
+      <div class="gj-form-row">
+        <div class="field">
+          <label>คู่เงิน/สินทรัพย์</label>
+          <input type="text" id="fPair" placeholder="XAUUSD" value="XAUUSD">
+        </div>
+        <div class="field">
+          <label>ทิศทาง</label>
+          <select id="fDirection">
+            <option value="buy">Buy</option>
+            <option value="sell">Sell</option>
+          </select>
+        </div>
+      </div>
+      <div class="gj-form-row">
+        <div class="field">
+          <label>ล็อต</label>
+          <input type="number" id="fLot" step="0.01" placeholder="0.10">
+        </div>
+        <div class="field">
+          <label>กำไร/ขาดทุน ($)</label>
+          <input type="number" id="fPnl" step="0.01" placeholder="0.00">
+        </div>
+      </div>
+      <div class="gj-form-row">
+        <div class="field">
+          <label>บันทึก / เหตุผลการเข้าเทรด</label>
+          <textarea id="fNote" placeholder="แนวโน้ม, จุดเข้า, SL/TP, อารมณ์ตลาด ฯลฯ"></textarea>
+        </div>
+      </div>
+      <div class="gj-modal-actions">
+        <button class="gj-btn" id="closeModal">ปิด</button>
+        <button class="gj-btn primary" id="addEntry">+ เพิ่มรายการ</button>
+      </div>
+
+      <div class="gj-entries" id="entriesList"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORE_KEY = 'goldTradeJournal';
+    const dowLabels = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+    function loadData(){
+      try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+      catch(e){ return {}; }
+    }
+    function saveData(data){
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    }
+    let journal = loadData();
+
+    const today = new Date();
+    let viewYear = today.getFullYear();
+    let viewMonth = today.getMonth();
+    let activeDateKey = null;
+
+    function dateKey(y,m,d){
+      return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    }
+    function fmtMoney(n){
+      const sign = n < 0 ? '-' : '';
+      return sign + '$' + Math.abs(n).toFixed(2);
+    }
+
+    function renderCalendar(){
+      document.getElementById('monthLabel').textContent =
+        new Date(viewYear, viewMonth, 1).toLocaleDateString('th-TH', {month:'long', year:'numeric'});
+
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+      dowLabels.forEach(l => {
+        const el = document.createElement('div');
+        el.className = 'gj-dow';
+        el.textContent = l;
+        grid.appendChild(el);
+      });
+
+      const firstDow = new Date(viewYear, viewMonth, 1).getDay();
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+      for(let i=0;i<firstDow;i++){
+        const el = document.createElement('div');
+        el.className = 'gj-cell empty';
+        grid.appendChild(el);
+      }
+
+      let monthPnl = 0, monthCount = 0, monthWins = 0;
+
+      for(let d=1; d<=daysInMonth; d++){
+        const key = dateKey(viewYear, viewMonth, d);
+        const entries = journal[key] || [];
+        const dayPnl = entries.reduce((s,e) => s + (Number(e.pnl)||0), 0);
+        entries.forEach(e => { if(Number(e.pnl) > 0) monthWins++; });
+        monthPnl += dayPnl;
+        monthCount += entries.length;
+
+        const cell = document.createElement('div');
+        cell.className = 'gj-cell';
+        const isToday = key === dateKey(today.getFullYear(), today.getMonth(), today.getDate());
+        if(isToday) cell.classList.add('today');
+
+        const dateEl = document.createElement('div');
+        dateEl.className = 'gj-date';
+        dateEl.textContent = d;
+        cell.appendChild(dateEl);
+
+        if(entries.length){
+          const pnlEl = document.createElement('div');
+          pnlEl.className = 'gj-day-pnl ' + (dayPnl >= 0 ? 'pos' : 'neg');
+          pnlEl.textContent = fmtMoney(dayPnl);
+          cell.appendChild(pnlEl);
+
+          const countEl = document.createElement('div');
+          countEl.className = 'gj-day-count';
+          countEl.textContent = `${entries.length} ตา`;
+          cell.appendChild(countEl);
+        }
+
+        cell.addEventListener('click', () => openModal(key));
+        grid.appendChild(cell);
+      }
+
+      document.getElementById('statMonthPnl').textContent = fmtMoney(monthPnl);
+      document.getElementById('statMonthPnl').className = 'val ' + (monthPnl >= 0 ? 'pos' : 'neg');
+      document.getElementById('statMonthCount').textContent = monthCount;
+      document.getElementById('statMonthWinrate').textContent =
+        monthCount ? Math.round((monthWins / monthCount) * 100) + '%' : '—';
+    }
+
+    function openModal(key){
+      activeDateKey = key;
+      const d = new Date(key + 'T00:00:00');
+      document.getElementById('modalDateLabel').textContent =
+        d.toLocaleDateString('th-TH', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+      document.getElementById('fPair').value = 'XAUUSD';
+      document.getElementById('fDirection').value = 'buy';
+      document.getElementById('fLot').value = '';
+      document.getElementById('fPnl').value = '';
+      document.getElementById('fNote').value = '';
+      renderEntries();
+      document.getElementById('modalBackdrop').hidden = false;
+    }
+    function closeModal(){
+      document.getElementById('modalBackdrop').hidden = true;
+      activeDateKey = null;
+      renderCalendar();
+    }
+
+    function renderEntries(){
+      const list = document.getElementById('entriesList');
+      list.innerHTML = '';
+      const entries = journal[activeDateKey] || [];
+      entries.slice().reverse().forEach((e, revIdx) => {
+        const idx = entries.length - 1 - revIdx;
+        const item = document.createElement('div');
+        item.className = 'gj-entry';
+        const pnlNum = Number(e.pnl) || 0;
+        item.innerHTML = `
+          <div class="gj-entry-top">
+            <span class="gj-entry-pair">${e.pair || '-'} · ${e.direction === 'sell' ? 'Sell' : 'Buy'}</span>
+            <span class="gj-entry-pnl ${pnlNum >= 0 ? 'pos' : 'neg'}">${fmtMoney(pnlNum)}</span>
+          </div>
+          <div class="gj-entry-meta">ล็อต: ${e.lot || '-'}</div>
+          ${e.note ? `<div class="gj-entry-note"></div>` : ''}
+          <button class="gj-entry-del" data-idx="${idx}">ลบรายการนี้</button>
+        `;
+        if(e.note){
+          item.querySelector('.gj-entry-note').textContent = e.note;
+        }
+        item.querySelector('.gj-entry-del').addEventListener('click', () => {
+          entries.splice(idx, 1);
+          if(entries.length){ journal[activeDateKey] = entries; }
+          else{ delete journal[activeDateKey]; }
+          saveData(journal);
+          renderEntries();
+        });
+        list.appendChild(item);
+      });
+    }
+
+    document.getElementById('addEntry').addEventListener('click', () => {
+      const pair = document.getElementById('fPair').value.trim() || 'XAUUSD';
+      const direction = document.getElementById('fDirection').value;
+      const lot = document.getElementById('fLot').value;
+      const pnl = document.getElementById('fPnl').value;
+      const note = document.getElementById('fNote').value.trim();
+
+      if(!journal[activeDateKey]) journal[activeDateKey] = [];
+      journal[activeDateKey].push({ pair, direction, lot, pnl, note });
+      saveData(journal);
+
+      document.getElementById('fLot').value = '';
+      document.getElementById('fPnl').value = '';
+      document.getElementById('fNote').value = '';
+      renderEntries();
+    });
+
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    document.getElementById('modalBackdrop').addEventListener('click', (ev) => {
+      if(ev.target.id === 'modalBackdrop') closeModal();
+    });
+
+    document.getElementById('prevMonth').addEventListener('click', () => {
+      viewMonth--; if(viewMonth < 0){ viewMonth = 11; viewYear--; }
+      renderCalendar();
+    });
+    document.getElementById('nextMonth').addEventListener('click', () => {
+      viewMonth++; if(viewMonth > 11){ viewMonth = 0; viewYear++; }
+      renderCalendar();
+    });
+    document.getElementById('gotoToday').addEventListener('click', () => {
+      viewYear = today.getFullYear(); viewMonth = today.getMonth();
+      renderCalendar();
+    });
+
+    renderCalendar();
+  </script>
+</body>
+</html>
