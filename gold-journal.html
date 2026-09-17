@@ -237,11 +237,11 @@
       <div class="gj-form-row">
         <div class="field">
           <label>ล็อต</label>
-          <input type="number" id="fLot" step="0.01" placeholder="0.10">
+          <input type="number" id="fLot" step="0.01" placeholder="0.10" required>
         </div>
         <div class="field">
           <label>กำไร/ขาดทุน ($)</label>
-          <input type="number" id="fPnl" step="0.01" placeholder="0.00">
+          <input type="number" id="fPnl" step="0.01" placeholder="0.00" required>
         </div>
       </div>
       <div class="gj-form-row">
@@ -462,6 +462,11 @@
       const lot = document.getElementById('fLot').value;
       const pnl = document.getElementById('fPnl').value;
       const note = document.getElementById('fNote').value.trim();
+
+      if(lot === '' || pnl === ''){
+        alert('กรุณากรอกล็อตและกำไร/ขาดทุนให้ครบก่อนบันทึก');
+        return;
+      }
 
       const addBtn = document.getElementById('addEntry');
       addBtn.disabled = true;
