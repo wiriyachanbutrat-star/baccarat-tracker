@@ -6,95 +6,186 @@
   <title>บันทึกการเทรดทอง - ปฏิทิน</title>
   <link rel="stylesheet" href="style.css">
   <style>
+    :root{
+      /* Sky-blue & white theme override for this page (keeps other pages on the navy theme) */
+      --felt-900:#eaf4fb;
+      --felt-800:#ffffff;
+      --felt-700:#dcedfb;
+      --felt-line:rgba(24,90,140,0.14);
+      --gold:#c9932e;
+      --gold-soft:#e0a83f;
+      --cream:#173248;
+      --muted:rgba(23,50,72,0.6);
+      --shadow: 0 18px 40px rgba(24,90,140,0.12);
+
+      --gj-buy:#1f9d6b;
+      --gj-buy-soft:#1a8058;
+      --gj-sell:#d1495b;
+      --gj-sell-soft:#c33a4c;
+      --gj-glow: 0 0 0 1px rgba(224,168,63,0.3), 0 10px 26px rgba(24,90,140,0.18);
+    }
+
+    html,body{
+      background:
+        radial-gradient(ellipse at 50% -10%, #eaf6ff 0%, #dcedfb 45%, #cfe7f7 100%) !important;
+    }
+    .gj-wrap .nav-link{ color:#1c6ea8; }
+    .gj-wrap .nav-link:hover{ color:#c9932e; }
+
     .gj-wrap{ max-width:1220px; margin:0 auto; }
+
+    .gj-wrap header h1{
+      background:linear-gradient(90deg, var(--gold-soft) 0%, var(--cream) 45%, var(--gold) 100%);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .gj-wrap .eyebrow{
+      position:relative; display:inline-block;
+    }
+    .gj-wrap .eyebrow::after{
+      content:''; display:block; height:2px; width:52px; margin:0.5rem auto 0;
+      background:linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
     .gj-toolbar{
       display:flex; align-items:center; justify-content:space-between; gap:0.75rem;
       flex-wrap:wrap; margin-bottom:1rem;
+      background:linear-gradient(135deg, #ffffff, #eaf4fb);
+      border:1px solid var(--felt-line); border-radius:var(--panel-radius);
+      padding:0.6rem 0.9rem;
+      box-shadow:0 6px 18px rgba(24,90,140,0.08);
     }
     .gj-toolbar h2{
       margin:0; font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;
       font-size:1.4rem; color:var(--cream); min-width:180px; text-align:center;
+      letter-spacing:0.02em;
     }
     .gj-nav-btn{
-      background:var(--felt-800); border:1px solid var(--felt-line); color:var(--cream);
+      background:var(--felt-900); border:1px solid var(--felt-line); color:var(--cream);
       border-radius:10px; padding:0.5rem 0.9rem; cursor:pointer; font-size:1rem;
+      transition:transform 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
     }
-    .gj-nav-btn:hover{ border-color:var(--gold); color:var(--gold-soft); }
+    .gj-nav-btn:hover{ border-color:var(--gold); color:var(--gold-soft); transform:translateY(-1px); box-shadow:0 6px 14px rgba(24,90,140,0.15); }
     .gj-today-btn{
-      background:var(--felt-700); border:1px solid var(--gold); color:var(--gold-soft);
-      border-radius:10px; padding:0.5rem 0.9rem; cursor:pointer; font-size:0.85rem;
+      background:linear-gradient(135deg, var(--gold-soft), var(--gold));
+      border:1px solid var(--gold); color:var(--felt-900);
+      border-radius:10px; padding:0.5rem 0.9rem; cursor:pointer; font-size:0.85rem; font-weight:700;
+      transition:transform 0.15s, box-shadow 0.15s;
     }
+    .gj-today-btn:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(201,162,39,0.35); }
+
     .gj-summary{
       display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;
     }
     .gj-stat{
-      background:var(--felt-800); border:1px solid var(--felt-line); border-radius:var(--panel-radius);
-      padding:0.7rem 1rem; flex:1; min-width:130px; text-align:center;
+      position:relative; overflow:hidden;
+      background:linear-gradient(160deg, var(--felt-800) 0%, var(--felt-900) 100%);
+      border:1px solid var(--felt-line); border-radius:var(--panel-radius);
+      padding:0.8rem 1rem; flex:1; min-width:130px; text-align:center;
+      box-shadow:0 8px 20px rgba(24,90,140,0.1);
+      transition:transform 0.15s, box-shadow 0.15s;
     }
-    .gj-stat .lbl{ font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; }
-    .gj-stat .val{ font-size:1.3rem; font-weight:600; margin-top:0.2rem; }
-    .gj-stat .val.pos{ color:var(--good); }
-    .gj-stat .val.neg{ color:var(--bad); }
+    .gj-stat::before{
+      content:''; position:absolute; top:0; left:0; right:0; height:2px;
+      background:linear-gradient(90deg, var(--gold), transparent 70%);
+    }
+    .gj-stat:hover{ transform:translateY(-2px); box-shadow:0 12px 26px rgba(24,90,140,0.18); }
+    .gj-stat .lbl{ font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+    .gj-stat .val{ font-size:1.45rem; font-weight:700; margin-top:0.25rem; color:var(--gold-soft); }
+    .gj-stat .val.pos{ color:var(--gj-buy-soft); }
+    .gj-stat .val.neg{ color:var(--gj-sell-soft); }
+
     .gj-calendar{
-      display:grid; grid-template-columns:repeat(7,1fr); gap:6px;
+      display:grid; grid-template-columns:repeat(7,1fr); gap:7px;
     }
     .gj-dow{
-      text-align:center; font-size:0.75rem; color:var(--muted); padding:0.3rem 0;
-      text-transform:uppercase; letter-spacing:0.05em;
+      text-align:center; font-size:0.72rem; color:var(--gold-soft); padding:0.35rem 0;
+      text-transform:uppercase; letter-spacing:0.08em; font-weight:600;
     }
     .gj-cell{
-      background:var(--felt-800); border:1px solid var(--felt-line); border-radius:10px;
-      min-height:92px; padding:0.4rem; cursor:pointer; display:flex; flex-direction:column;
-      gap:0.25rem; transition:border-color 0.15s, background 0.15s;
+      background:linear-gradient(160deg, var(--felt-800) 0%, var(--felt-900) 100%);
+      border:1px solid var(--felt-line); border-radius:10px;
+      min-height:92px; padding:0.45rem; cursor:pointer; display:flex; flex-direction:column;
+      gap:0.25rem; transition:transform 0.15s, border-color 0.15s, box-shadow 0.15s;
     }
-    .gj-cell:hover{ border-color:var(--gold); }
-    .gj-cell.empty{ background:transparent; border:none; cursor:default; }
-    .gj-cell.today{ border-color:var(--gold-soft); box-shadow:0 0 0 1px var(--gold-soft) inset; }
-    .gj-date{ font-size:0.85rem; font-weight:600; color:var(--cream); }
+    .gj-cell:hover{ border-color:var(--gold); transform:translateY(-2px) scale(1.015); box-shadow:0 10px 22px rgba(24,90,140,0.16); }
+    .gj-cell.empty{ background:transparent; border:none; cursor:default; box-shadow:none; }
+    .gj-cell.today{
+      border-color:var(--gold-soft);
+      box-shadow:var(--gj-glow);
+    }
+    .gj-cell.has-win{ border-left:3px solid var(--gj-buy); }
+    .gj-cell.has-loss{ border-left:3px solid var(--gj-sell); }
+    .gj-date{ font-size:0.85rem; font-weight:700; color:var(--cream); }
     .gj-cell.empty .gj-date{ visibility:hidden; }
-    .gj-day-pnl{ font-size:0.85rem; font-weight:700; }
-    .gj-day-pnl.pos{ color:var(--good); }
-    .gj-day-pnl.neg{ color:var(--bad); }
-    .gj-day-count{ font-size:0.68rem; color:var(--muted); margin-top:auto; }
+    .gj-day-pnl{ font-size:0.86rem; font-weight:800; letter-spacing:0.01em; }
+    .gj-day-pnl.pos{ color:var(--gj-buy-soft); }
+    .gj-day-pnl.neg{ color:var(--gj-sell-soft); }
+    .gj-day-count{ font-size:0.66rem; color:var(--muted); margin-top:auto; }
 
     .gj-modal-backdrop{
-      position:fixed; inset:0; background:rgba(0,0,0,0.55); display:flex;
-      align-items:center; justify-content:center; padding:1rem; z-index:50;
+      position:fixed; inset:0; background:rgba(6,6,18,0.65); backdrop-filter:blur(3px);
+      display:flex; align-items:center; justify-content:center; padding:1rem; z-index:50;
     }
     .gj-modal-backdrop[hidden]{ display:none; }
     .gj-modal{
-      background:var(--felt-800); border:1px solid var(--felt-line); border-radius:var(--panel-radius);
+      background:linear-gradient(165deg, var(--felt-800) 0%, var(--felt-900) 100%);
+      border:1px solid var(--felt-line); border-radius:var(--panel-radius);
       width:100%; max-width:520px; max-height:88vh; overflow-y:auto; padding:1.2rem;
-      box-shadow:var(--shadow);
+      box-shadow:0 24px 60px rgba(24,90,140,0.25), 0 0 0 1px rgba(201,147,46,0.15);
     }
-    .gj-modal h3{ margin:0 0 0.9rem; color:var(--gold-soft); font-family:Georgia,serif; }
+    .gj-modal h3{
+      margin:0 0 0.9rem; color:var(--gold-soft); font-family:Georgia,serif;
+      padding-bottom:0.6rem; border-bottom:1px solid var(--felt-line);
+    }
     .gj-form-row{ display:flex; gap:0.6rem; margin-bottom:0.6rem; flex-wrap:wrap; }
     .gj-form-row label{ font-size:0.75rem; color:var(--muted); display:block; margin-bottom:0.25rem; }
     .gj-form-row .field{ flex:1; min-width:110px; }
     .gj-form-row input, .gj-form-row select, .gj-form-row textarea{
       width:100%; background:var(--felt-900); border:1px solid var(--felt-line); color:var(--cream);
       border-radius:8px; padding:0.5rem 0.6rem; font-size:0.9rem; font-family:inherit;
+      transition:border-color 0.15s, box-shadow 0.15s;
+    }
+    .gj-form-row input:focus, .gj-form-row select:focus, .gj-form-row textarea:focus{
+      outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,162,39,0.18);
     }
     .gj-form-row textarea{ resize:vertical; min-height:60px; }
     .gj-modal-actions{ display:flex; justify-content:flex-end; gap:0.5rem; margin-top:0.4rem; }
     .gj-btn{
       border-radius:8px; padding:0.55rem 1rem; cursor:pointer; font-size:0.85rem; border:1px solid var(--felt-line);
-      background:var(--felt-900); color:var(--cream);
+      background:var(--felt-900); color:var(--cream); transition:transform 0.12s, box-shadow 0.12s, border-color 0.12s;
     }
-    .gj-btn.primary{ background:var(--gold); border-color:var(--gold); color:var(--felt-900); font-weight:600; }
-    .gj-btn.danger{ background:transparent; border-color:var(--bad); color:var(--banker-soft); }
+    .gj-btn:hover{ transform:translateY(-1px); }
+    .gj-btn.primary{
+      background:linear-gradient(135deg, var(--gold-soft), var(--gold));
+      border-color:var(--gold); color:var(--felt-900); font-weight:700;
+    }
+    .gj-btn.primary:hover{ box-shadow:0 8px 18px rgba(201,162,39,0.35); }
+    .gj-btn.danger{ background:transparent; border-color:var(--gj-sell); color:var(--gj-sell-soft); }
     .gj-entries{ display:flex; flex-direction:column; gap:0.6rem; margin-top:0.8rem; }
     .gj-entry{
-      background:var(--felt-900); border:1px solid var(--felt-line); border-radius:10px; padding:0.6rem 0.7rem;
+      background:var(--felt-900); border:1px solid var(--felt-line); border-left:3px solid var(--felt-line);
+      border-radius:10px; padding:0.6rem 0.7rem; transition:border-color 0.15s;
     }
+    .gj-entry.buy{ border-left-color:var(--gj-buy); }
+    .gj-entry.sell{ border-left-color:var(--gj-sell); }
     .gj-entry-top{ display:flex; justify-content:space-between; align-items:center; gap:0.5rem; }
-    .gj-entry-pair{ font-weight:600; }
-    .gj-entry-pnl{ font-weight:700; }
-    .gj-entry-pnl.pos{ color:var(--good); }
-    .gj-entry-pnl.neg{ color:var(--bad); }
+    .gj-entry-pair{ font-weight:700; display:flex; align-items:center; gap:0.4rem; }
+    .gj-dir-badge{
+      font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;
+      padding:0.15rem 0.45rem; border-radius:999px;
+    }
+    .gj-dir-badge.buy{ background:rgba(63,174,116,0.16); color:var(--gj-buy-soft); border:1px solid rgba(63,174,116,0.4); }
+    .gj-dir-badge.sell{ background:rgba(209,73,91,0.16); color:var(--gj-sell-soft); border:1px solid rgba(209,73,91,0.4); }
+    .gj-entry-pnl{ font-weight:800; }
+    .gj-entry-pnl.pos{ color:var(--gj-buy-soft); }
+    .gj-entry-pnl.neg{ color:var(--gj-sell-soft); }
     .gj-entry-meta{ font-size:0.75rem; color:var(--muted); margin-top:0.2rem; }
-    .gj-entry-note{ font-size:0.82rem; margin-top:0.3rem; white-space:pre-wrap; }
-    .gj-entry-del{ background:none; border:none; color:var(--bad); cursor:pointer; font-size:0.75rem; }
+    .gj-entry-note{ font-size:0.82rem; margin-top:0.3rem; white-space:pre-wrap; color:var(--cream); }
+    .gj-entry-del{
+      background:none; border:none; color:var(--gj-sell-soft); cursor:pointer; font-size:0.75rem;
+      margin-top:0.4rem; opacity:0.75; transition:opacity 0.15s;
+    }
+    .gj-entry-del:hover{ opacity:1; text-decoration:underline; }
   </style>
 </head>
 <body>
@@ -169,17 +260,38 @@
   </div>
 
   <script>
-    const STORE_KEY = 'goldTradeJournal';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJi6cL1MfXzNeV2WcCFuy4ZlF3A1Yj7LQxEDdF0cxuitPwQ2q2P6J38VD4iHCLbKi-/exec';
     const dowLabels = ['อา','จ','อ','พ','พฤ','ศ','ส'];
 
-    function loadData(){
-      try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
-      catch(e){ return {}; }
+    let journal = {};
+
+    async function fetchAllEntries(){
+      const res = await fetch(SCRIPT_URL);
+      const data = await res.json();
+      journal = {};
+      (data.entries || []).forEach(e => {
+        if(!journal[e.date]) journal[e.date] = [];
+        journal[e.date].push(e);
+      });
     }
-    function saveData(data){
-      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+
+    async function addEntryToSheet(entry){
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'add', ...entry })
+      });
+      return res.json();
     }
-    let journal = loadData();
+
+    async function deleteEntryFromSheet(id){
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'delete', id })
+      });
+      return res.json();
+    }
 
     const today = new Date();
     let viewYear = today.getFullYear();
@@ -230,6 +342,8 @@
         cell.className = 'gj-cell';
         const isToday = key === dateKey(today.getFullYear(), today.getMonth(), today.getDate());
         if(isToday) cell.classList.add('today');
+        if(dayPnl > 0) cell.classList.add('has-win');
+        else if(dayPnl < 0) cell.classList.add('has-loss');
 
         const dateEl = document.createElement('div');
         dateEl.className = 'gj-date';
@@ -282,45 +396,51 @@
       const list = document.getElementById('entriesList');
       list.innerHTML = '';
       const entries = journal[activeDateKey] || [];
-      entries.slice().reverse().forEach((e, revIdx) => {
-        const idx = entries.length - 1 - revIdx;
+      entries.slice().reverse().forEach(e => {
         const item = document.createElement('div');
-        item.className = 'gj-entry';
+        const isSell = e.direction === 'sell';
+        item.className = 'gj-entry ' + (isSell ? 'sell' : 'buy');
         const pnlNum = Number(e.pnl) || 0;
         item.innerHTML = `
           <div class="gj-entry-top">
-            <span class="gj-entry-pair">${e.pair || '-'} · ${e.direction === 'sell' ? 'Sell' : 'Buy'}</span>
+            <span class="gj-entry-pair">${e.pair || '-'} <span class="gj-dir-badge ${isSell ? 'sell' : 'buy'}">${isSell ? 'Sell' : 'Buy'}</span></span>
             <span class="gj-entry-pnl ${pnlNum >= 0 ? 'pos' : 'neg'}">${fmtMoney(pnlNum)}</span>
           </div>
           <div class="gj-entry-meta">ล็อต: ${e.lot || '-'}</div>
           ${e.note ? `<div class="gj-entry-note"></div>` : ''}
-          <button class="gj-entry-del" data-idx="${idx}">ลบรายการนี้</button>
+          <button class="gj-entry-del">ลบรายการนี้</button>
         `;
         if(e.note){
           item.querySelector('.gj-entry-note').textContent = e.note;
         }
-        item.querySelector('.gj-entry-del').addEventListener('click', () => {
-          entries.splice(idx, 1);
-          if(entries.length){ journal[activeDateKey] = entries; }
-          else{ delete journal[activeDateKey]; }
-          saveData(journal);
+        const delBtn = item.querySelector('.gj-entry-del');
+        delBtn.addEventListener('click', async () => {
+          delBtn.disabled = true;
+          delBtn.textContent = 'กำลังลบ...';
+          await deleteEntryFromSheet(e.id);
+          await fetchAllEntries();
           renderEntries();
         });
         list.appendChild(item);
       });
     }
 
-    document.getElementById('addEntry').addEventListener('click', () => {
+    document.getElementById('addEntry').addEventListener('click', async () => {
       const pair = document.getElementById('fPair').value.trim() || 'XAUUSD';
       const direction = document.getElementById('fDirection').value;
       const lot = document.getElementById('fLot').value;
       const pnl = document.getElementById('fPnl').value;
       const note = document.getElementById('fNote').value.trim();
 
-      if(!journal[activeDateKey]) journal[activeDateKey] = [];
-      journal[activeDateKey].push({ pair, direction, lot, pnl, note });
-      saveData(journal);
+      const addBtn = document.getElementById('addEntry');
+      addBtn.disabled = true;
+      addBtn.textContent = 'กำลังบันทึก...';
 
+      await addEntryToSheet({ date: activeDateKey, pair, direction, lot, pnl, note });
+      await fetchAllEntries();
+
+      addBtn.disabled = false;
+      addBtn.textContent = '+ เพิ่มรายการ';
       document.getElementById('fLot').value = '';
       document.getElementById('fPnl').value = '';
       document.getElementById('fNote').value = '';
@@ -345,7 +465,17 @@
       renderCalendar();
     });
 
-    renderCalendar();
+    (async () => {
+      document.getElementById('monthLabel').textContent = 'กำลังโหลด...';
+      try{
+        await fetchAllEntries();
+      }catch(err){
+        document.getElementById('monthLabel').textContent = 'โหลดข้อมูลไม่สำเร็จ';
+        console.error(err);
+        return;
+      }
+      renderCalendar();
+    })();
   </script>
 </body>
 </html>
