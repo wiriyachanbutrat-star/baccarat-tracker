@@ -277,22 +277,24 @@
       });
     }
 
-    async function addEntryToSheet(entry){
-      const res = await fetch(SCRIPT_URL, {
+    // Apps Script's redirect-based response breaks normal CORS fetch for POST,
+    // so we fire the write "blind" (no-cors, opaque response) and confirm it
+    // by re-fetching the list afterward.
+    async function postToSheet(payload){
+      await fetch(SCRIPT_URL, {
         method: 'POST',
+        mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'add', secret: SHEET_SECRET, ...entry })
+        body: JSON.stringify(payload)
       });
-      return res.json();
+    }
+
+    async function addEntryToSheet(entry){
+      await postToSheet({ action: 'add', secret: SHEET_SECRET, ...entry });
     }
 
     async function deleteEntryFromSheet(id){
-      const res = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'delete', secret: SHEET_SECRET, id })
-      });
-      return res.json();
+      await postToSheet({ action: 'delete', secret: SHEET_SECRET, id });
     }
 
     const today = new Date();
