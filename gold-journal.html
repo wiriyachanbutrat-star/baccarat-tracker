@@ -261,13 +261,15 @@
 
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJi6cL1MfXzNeV2WcCFuy4ZlF3A1Yj7LQxEDdF0cxuitPwQ2q2P6J38VD4iHCLbKi-/exec';
+    const SHEET_SECRET = '30eda61cd3744387b96d1c4ce959eb33';
     const dowLabels = ['อา','จ','อ','พ','พฤ','ศ','ส'];
 
     let journal = {};
 
     async function fetchAllEntries(){
-      const res = await fetch(SCRIPT_URL);
+      const res = await fetch(`${SCRIPT_URL}?secret=${encodeURIComponent(SHEET_SECRET)}`);
       const data = await res.json();
+      if(data.ok === false) throw new Error(data.error || 'unauthorized');
       journal = {};
       (data.entries || []).forEach(e => {
         if(!journal[e.date]) journal[e.date] = [];
@@ -279,7 +281,7 @@
       const res = await fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'add', ...entry })
+        body: JSON.stringify({ action: 'add', secret: SHEET_SECRET, ...entry })
       });
       return res.json();
     }
@@ -288,7 +290,7 @@
       const res = await fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'delete', id })
+        body: JSON.stringify({ action: 'delete', secret: SHEET_SECRET, id })
       });
       return res.json();
     }
